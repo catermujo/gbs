@@ -16,77 +16,28 @@ import (
 // Conn WebSocket连接
 // WebSocket connection
 type Conn struct {
-	// 互斥锁，用于保护共享资源
-	// Mutex to protect shared resources
-	mu sync.Mutex
-
-	// 会话存储，用于存储会话数据
-	// Session storage for storing session data
-	ss SessionStorage
-
-	// 用于存储错误的原子值
-	// Atomic value for storing errors
-	ev atomic.Value
-
-	// 标识是否为服务器端
-	// Indicates if this is a server-side connection
-	isServer bool
-
-	// 子协议
-	// Subprotocol
-	subprotocol string
-
-	// 底层网络连接
-	// Underlying network connection
-	conn net.Conn
-
-	// 配置信息
-	// Configuration information
-	config *Config
-
-	// 缓冲读取器
-	// Buffered reader
-	br *bufio.Reader
-
-	// 持续帧
-	// Continuation frame
-	continuationFrame continuationFrame
-
-	// 帧头
-	// Frame header
-	fh frameHeader
-
-	// 事件处理器
-	// Event handler
-	handler Event
-
-	// 关闭状态
-	// Closed state
-	closed uint32
-
-	// 读取队列
-	// Read queue
+	// ev Atomic value for storing errors
+	ev        atomic.Value
+	ss        SessionStorage
+	conn      net.Conn
+	handler   Event
 	readQueue channel
-
-	// 写入队列
-	// Write queue
-	writeQueue workerQueue
-
-	// 压缩器
-	// Deflater
-	deflater *deflater
-
-	// 解压字典滑动窗口
-	// Decompressing dictionary sliding window
-	dpsWindow slideWindow
-
-	// 压缩字典滑动窗口
+	config    *Config
+	deflater  *deflater
+	// br Buffered reader
+	br                *bufio.Reader
+	subprotocol       string
+	continuationFrame continuationFrame
 	// Compressed dictionary sliding window
 	cpsWindow slideWindow
-
-	// 压缩拓展配置
-	// Compression extension configuration
-	pd PermessageDeflate
+	// Decompressing dictionary sliding window
+	dpsWindow  slideWindow
+	writeQueue workerQueue
+	pd         PermessageDeflate
+	mu         sync.Mutex
+	closed     uint32
+	fh         frameHeader
+	isServer   bool
 }
 
 // ReadLoop
@@ -141,7 +92,7 @@ func (c *Conn) emitError(reading bool, err error) {
 	if atomic.CompareAndSwapUint32(&c.closed, 0, 1) {
 		// 待发送的错误码和错误原因
 		// Error code to be sent and cause of error
-		var sendCode, sendErr = internal.CloseGoingAway, error(internal.CloseGoingAway)
+		sendCode, sendErr := internal.CloseGoingAway, error(internal.CloseGoingAway)
 		if reading {
 			switch v := err.(type) {
 			case internal.StatusCode:
@@ -153,7 +104,7 @@ func (c *Conn) emitError(reading bool, err error) {
 			}
 		}
 
-		var reason = append(sendCode.Bytes(), sendErr.Error()...)
+		reason := append(sendCode.Bytes(), sendErr.Error()...)
 		_ = c.writeClose(err, reason)
 	}
 }
@@ -161,8 +112,8 @@ func (c *Conn) emitError(reading bool, err error) {
 // 处理关闭事件
 // Handles the close event
 func (c *Conn) emitClose(buf *bytes.Buffer) error {
-	var responseCode = internal.CloseNormalClosure
-	var realCode = internal.CloseNormalClosure.Uint16()
+	responseCode := internal.CloseNormalClosure
+	realCode := internal.CloseNormalClosure.Uint16()
 	switch buf.Len() {
 	case 0:
 		responseCode = 0

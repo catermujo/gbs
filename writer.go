@@ -16,7 +16,7 @@ import (
 // https://developer.mozilla.org/zh-CN/docs/Web/API/CloseEvent#status_codes
 func (c *Conn) WriteClose(code uint16, reason []byte) error {
 	if atomic.CompareAndSwapUint32(&c.closed, 0, 1) {
-		var buf = binaryPool.Get(128)
+		buf := binaryPool.Get(128)
 		code = internal.SelectValue(code < 1000, 1000, code)
 		buf.Write(internal.StatusCode(code).Bytes())
 		buf.Write(reason)
@@ -86,7 +86,7 @@ func (c *Conn) WriteAsync(opcode Opcode, payload []byte, callback func(error)) {
 // 类似 WriteMessage, 区别是可以一次写入多个切片
 // Writev is similar to WriteMessage, except that you can write multiple slices at once.
 func (c *Conn) Writev(opcode Opcode, payloads ...[]byte) error {
-	var err = c.doWrite(opcode, internal.Buffers(payloads))
+	err := c.doWrite(opcode, internal.Buffers(payloads))
 	c.emitError(false, err)
 	return err
 }
@@ -162,7 +162,7 @@ type frameConfig struct {
 // 生成帧数据
 // Generates the frame data
 func (c *Conn) genFrame(opcode Opcode, payload internal.Payload, cfg frameConfig) (*bytes.Buffer, error) {
-	var n = payload.Len()
+	n := payload.Len()
 	if opcode == OpcodeText && !payload.CheckEncoding(cfg.checkEncoding, uint8(opcode)) {
 		return nil, ErrTextEncoding
 	}
@@ -170,21 +170,21 @@ func (c *Conn) genFrame(opcode Opcode, payload internal.Payload, cfg frameConfig
 		return nil, ErrMessageTooLarge
 	}
 
-	var buf = binaryPool.Get(n + frameHeaderSize)
+	buf := binaryPool.Get(n + frameHeaderSize)
 	buf.Write(framePadding[0:])
 
 	if cfg.compress && opcode.isDataFrame() && n >= c.pd.Threshold {
 		return c.compressData(opcode, payload, buf, cfg)
 	}
 
-	var header = frameHeader{}
+	header := frameHeader{}
 	headerLength, maskBytes := header.GenerateHeader(c.isServer, cfg.fin, false, opcode, n)
 	_, _ = payload.WriteTo(buf)
-	var contents = buf.Bytes()
+	contents := buf.Bytes()
 	if !c.isServer {
 		internal.MaskXOR(contents[frameHeaderSize:], maskBytes)
 	}
-	var m = frameHeaderSize - headerLength
+	m := frameHeaderSize - headerLength
 	copy(contents[m:], header[:headerLength])
 	buf.Next(m)
 	return buf, nil
@@ -195,19 +195,19 @@ func (c *Conn) genFrame(opcode Opcode, payload internal.Payload, cfg frameConfig
 func (c *Conn) compressData(opcode Opcode, payload internal.Payload, buf *bytes.Buffer, cfg frameConfig) (*bytes.Buffer, error) {
 	// 广播模式必须保证每一帧都是相同的内容, 所以不能使用字典优化压缩率
 	// Broadcast mode must ensure that every frame is the same, so you can't use a dictionary to optimize the compression rate.
-	var dict = internal.SelectValue(cfg.broadcast, nil, c.cpsWindow.dict)
+	dict := internal.SelectValue(cfg.broadcast, nil, c.cpsWindow.dict)
 	if err := c.deflater.Compress(payload, buf, dict); err != nil {
 		return nil, err
 	}
 
-	var contents = buf.Bytes()
-	var payloadSize = buf.Len() - frameHeaderSize
-	var header = frameHeader{}
+	contents := buf.Bytes()
+	payloadSize := buf.Len() - frameHeaderSize
+	header := frameHeader{}
 	headerLength, maskBytes := header.GenerateHeader(c.isServer, cfg.fin, true, opcode, payloadSize)
 	if !c.isServer {
 		internal.MaskXOR(contents[frameHeaderSize:], maskBytes)
 	}
-	var m = frameHeaderSize - headerLength
+	m := frameHeaderSize - headerLength
 	copy(contents[m:], header[:headerLength])
 	buf.Next(m)
 	return buf, nil
@@ -215,16 +215,16 @@ func (c *Conn) compressData(opcode Opcode, payload internal.Payload, buf *bytes.
 
 type (
 	Broadcaster struct {
-		opcode  Opcode
-		payload []byte
 		msgs    [2]*broadcastMessageWrapper
+		payload []byte
 		state   int64
+		opcode  Opcode
 	}
 
 	broadcastMessageWrapper struct {
-		once  sync.Once
 		err   error
 		frame *bytes.Buffer
+		once  sync.Once
 	}
 )
 
@@ -249,7 +249,7 @@ func (c *Broadcaster) writeFrame(socket *Conn, frame *bytes.Buffer) error {
 		return ErrConnClosed
 	}
 	socket.mu.Lock()
-	var err = internal.WriteN(socket.conn, frame.Bytes())
+	err := internal.WriteN(socket.conn, frame.Bytes())
 	_, _ = socket.cpsWindow.Write(c.payload)
 	socket.mu.Unlock()
 	return err
@@ -259,8 +259,8 @@ func (c *Broadcaster) writeFrame(socket *Conn, frame *bytes.Buffer) error {
 // 向客户端发送广播消息
 // Send a broadcast message to a client.
 func (c *Broadcaster) Broadcast(socket *Conn) error {
-	var idx = internal.SelectValue(socket.pd.Enabled, 1, 0)
-	var msg = c.msgs[idx]
+	idx := internal.SelectValue(socket.pd.Enabled, 1, 0)
+	msg := c.msgs[idx]
 
 	msg.once.Do(func() {
 		msg.frame, msg.err = socket.genFrame(c.opcode, internal.Bytes(c.payload), frameConfig{
@@ -276,7 +276,7 @@ func (c *Broadcaster) Broadcast(socket *Conn) error {
 
 	atomic.AddInt64(&c.state, 1)
 	socket.writeQueue.Push(func() {
-		var err = c.writeFrame(socket, msg.frame)
+		err := c.writeFrame(socket, msg.frame)
 		socket.emitError(false, err)
 		if atomic.AddInt64(&c.state, -1) == 0 {
 			c.doClose()

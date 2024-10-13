@@ -9,9 +9,9 @@ import (
 // RandomString 随机字符串生成器
 // random string generator
 type RandomString struct {
-	mu     sync.Mutex
 	r      *rand.Rand
 	layout string
+	mu     sync.Mutex
 }
 
 var (
@@ -36,10 +36,10 @@ var (
 // generates a random byte slice of length n
 func (c *RandomString) Generate(n int) []byte {
 	c.mu.Lock()
-	var b = make([]byte, n, n)
-	var length = len(c.layout)
+	b := make([]byte, n)
+	length := len(c.layout)
 	for i := 0; i < n; i++ {
-		var idx = c.r.Intn(length)
+		idx := c.r.Intn(length)
 		b[i] = c.layout[idx]
 	}
 	c.mu.Unlock()

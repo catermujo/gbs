@@ -30,9 +30,9 @@ func nextPort() string {
 
 func newHttpWriter() *httpWriter {
 	server, client := net.Pipe()
-	var r = bytes.NewBuffer(nil)
-	var w = bytes.NewBuffer(nil)
-	var brw = bufio.NewReadWriter(bufio.NewReader(r), bufio.NewWriter(w))
+	r := bytes.NewBuffer(nil)
+	w := bytes.NewBuffer(nil)
+	brw := bufio.NewReadWriter(bufio.NewReader(r), bufio.NewWriter(w))
 
 	go func() {
 		for {
@@ -102,7 +102,7 @@ func TestNoDelay(t *testing.T) {
 }
 
 func TestAccept(t *testing.T) {
-	var upgrader = NewUpgrader(new(webSocketMocker), &ServerOption{
+	upgrader := NewUpgrader(new(webSocketMocker), &ServerOption{
 		PermessageDeflate: PermessageDeflate{Enabled: true},
 		ReadBufferSize:    1024,
 		WriteBufferSize:   1024,
@@ -114,7 +114,7 @@ func TestAccept(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		upgrader.option.PermessageDeflate.Enabled = true
 		upgrader.option.SubProtocols = []string{"chat"}
-		var request = &http.Request{
+		request := &http.Request{
 			Header: http.Header{},
 			Method: http.MethodGet,
 		}
@@ -129,7 +129,7 @@ func TestAccept(t *testing.T) {
 	})
 
 	t.Run("fail Sec-WebSocket-Version", func(t *testing.T) {
-		var request = &http.Request{
+		request := &http.Request{
 			Header: http.Header{},
 			Method: http.MethodGet,
 		}
@@ -143,7 +143,7 @@ func TestAccept(t *testing.T) {
 	})
 
 	t.Run("fail method", func(t *testing.T) {
-		var request = &http.Request{
+		request := &http.Request{
 			Header: http.Header{},
 			Method: http.MethodPost,
 		}
@@ -152,7 +152,7 @@ func TestAccept(t *testing.T) {
 	})
 
 	t.Run("fail Connection", func(t *testing.T) {
-		var request = &http.Request{
+		request := &http.Request{
 			Header: http.Header{},
 			Method: http.MethodGet,
 		}
@@ -164,7 +164,7 @@ func TestAccept(t *testing.T) {
 	})
 
 	t.Run("fail Connection", func(t *testing.T) {
-		var request = &http.Request{
+		request := &http.Request{
 			Header: http.Header{},
 			Method: http.MethodGet,
 		}
@@ -176,7 +176,7 @@ func TestAccept(t *testing.T) {
 	})
 
 	t.Run("fail Sec-WebSocket-Key", func(t *testing.T) {
-		var request = &http.Request{
+		request := &http.Request{
 			Header: http.Header{},
 			Method: http.MethodGet,
 		}
@@ -192,7 +192,7 @@ func TestAccept(t *testing.T) {
 		upgrader.option.Authorize = func(r *http.Request, session SessionStorage) bool {
 			return false
 		}
-		var request = &http.Request{
+		request := &http.Request{
 			Header: http.Header{},
 			Method: http.MethodGet,
 		}
@@ -207,10 +207,10 @@ func TestAccept(t *testing.T) {
 }
 
 func TestFailHijack(t *testing.T) {
-	var upgrader = NewUpgrader(new(webSocketMocker), &ServerOption{
+	upgrader := NewUpgrader(new(webSocketMocker), &ServerOption{
 		ResponseHeader: http.Header{"Server": []string{"gws"}},
 	})
-	var request = &http.Request{
+	request := &http.Request{
 		Header: http.Header{},
 		Method: http.MethodGet,
 	}
@@ -227,11 +227,11 @@ func TestFailHijack(t *testing.T) {
 }
 
 func TestNewServer(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	t.Run("ok 1", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var server = NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
+		addr := ":" + nextPort()
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,
@@ -255,8 +255,8 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("ok 2", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var server = NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
+		addr := ":" + nextPort()
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,
@@ -279,8 +279,8 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("ok 3", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var server = NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
+		addr := ":" + nextPort()
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,
@@ -306,23 +306,23 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("tls", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var server = NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
+		addr := ":" + nextPort()
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,
 		}})
-		var dir = os.Getenv("PWD")
+		dir := os.Getenv("PWD")
 		go server.RunTLS(addr, dir+"/examples/wss/cert/server.crt", dir+"/examples/wss/cert/server.pem")
 		ctx, _ := context.WithTimeout(context.Background(), time.Second)
 		<-ctx.Done()
 	})
 
 	t.Run("fail 1", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var wg = sync.WaitGroup{}
+		addr := ":" + nextPort()
+		wg := sync.WaitGroup{}
 		wg.Add(1)
-		var server = NewServer(new(BuiltinEventHandler), nil)
+		server := NewServer(new(BuiltinEventHandler), nil)
 		server.OnError = func(conn net.Conn, err error) {
 			wg.Done()
 		}
@@ -331,16 +331,16 @@ func TestNewServer(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		client, err := net.Dial("tcp", "localhost"+addr)
 		as.NoError(err)
-		var payload = fmt.Sprintf("POST ws://localhost%s HTTP/1.1\r\n\r\n", addr)
+		payload := fmt.Sprintf("POST ws://localhost%s HTTP/1.1\r\n\r\n", addr)
 		client.Write([]byte(payload))
 		wg.Wait()
 	})
 
 	t.Run("fail 2", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var wg = sync.WaitGroup{}
+		addr := ":" + nextPort()
+		wg := sync.WaitGroup{}
 		wg.Add(1)
-		var server = NewServer(new(BuiltinEventHandler), nil)
+		server := NewServer(new(BuiltinEventHandler), nil)
 		server.OnError = func(conn net.Conn, err error) {
 			wg.Done()
 		}
@@ -349,14 +349,14 @@ func TestNewServer(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		client, err := net.Dial("tcp", "localhost"+addr)
 		as.NoError(err)
-		var payload = fmt.Sprintf("GET ws://localhost%s HTTP/1.1 GWS\r\n\r\n", addr)
+		payload := fmt.Sprintf("GET ws://localhost%s HTTP/1.1 GWS\r\n\r\n", addr)
 		client.Write([]byte(payload))
 		wg.Wait()
 	})
 
 	t.Run("fail 3", func(t *testing.T) {
-		var server = NewServer(new(BuiltinEventHandler), nil)
-		var addr = ":" + nextPort()
+		server := NewServer(new(BuiltinEventHandler), nil)
+		addr := ":" + nextPort()
 		go server.Run(addr)
 
 		time.Sleep(100 * time.Millisecond)
@@ -364,7 +364,7 @@ func TestNewServer(t *testing.T) {
 		as.Error(NewServer(new(BuiltinEventHandler), nil).RunTLS(addr, "", ""))
 		{
 			server := NewServer(new(BuiltinEventHandler), nil)
-			var dir = "./"
+			dir := "./"
 			go server.RunTLS(":"+nextPort(), dir+"/examples/wss/cert/server.crt", dir+"/examples/wss/cert/server.pem")
 			time.Sleep(100 * time.Millisecond)
 			as.Error(server.RunTLS(addr, dir+"/examples/wss/cert/server.crt", dir+"/examples/wss/cert/server.pem"))
@@ -374,7 +374,7 @@ func TestNewServer(t *testing.T) {
 
 func TestBuiltinEventEngine(t *testing.T) {
 	{
-		var ev = &webSocketMocker{}
+		ev := &webSocketMocker{}
 		_, ok := any(ev).(Event)
 		assert.Equal(t, true, ok)
 
@@ -386,7 +386,7 @@ func TestBuiltinEventEngine(t *testing.T) {
 	}
 
 	{
-		var ev = &BuiltinEventHandler{}
+		ev := &BuiltinEventHandler{}
 		ev.OnMessage(nil, &Message{})
 		ev.OnPong(nil, nil)
 	}
@@ -394,7 +394,7 @@ func TestBuiltinEventEngine(t *testing.T) {
 
 func TestSubprotocol(t *testing.T) {
 	t.Run("server close", func(t *testing.T) {
-		var addr = "127.0.0.1:" + nextPort()
+		addr := "127.0.0.1:" + nextPort()
 		app := NewServer(new(BuiltinEventHandler), &ServerOption{SubProtocols: []string{"chat"}})
 		go func() { app.Run(addr) }()
 
@@ -404,7 +404,7 @@ func TestSubprotocol(t *testing.T) {
 	})
 
 	t.Run("client close", func(t *testing.T) {
-		var addr = "127.0.0.1:" + nextPort()
+		addr := "127.0.0.1:" + nextPort()
 		app := NewServer(new(BuiltinEventHandler), &ServerOption{})
 		go func() { app.Run(addr) }()
 
@@ -419,7 +419,7 @@ func TestSubprotocol(t *testing.T) {
 	})
 
 	t.Run("ok", func(t *testing.T) {
-		var addr = "127.0.0.1:" + nextPort()
+		addr := "127.0.0.1:" + nextPort()
 		app := NewServer(new(BuiltinEventHandler), &ServerOption{SubProtocols: []string{"chat"}})
 		go func() { app.Run(addr) }()
 
@@ -452,8 +452,8 @@ func TestResponseWriter_Write(t *testing.T) {
 }
 
 func TestServer_RunListener(t *testing.T) {
-	var s = NewServer(&BuiltinEventHandler{}, nil)
-	var ln, _ = net.Listen("tcp", ":"+nextPort())
+	s := NewServer(&BuiltinEventHandler{}, nil)
+	ln, _ := net.Listen("tcp", ":"+nextPort())
 	_ = ln.Close()
 	go func() {
 		log.Default().SetOutput(bytes.NewBuffer(nil))

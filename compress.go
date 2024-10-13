@@ -19,9 +19,9 @@ import (
 var flateTail = []byte{0x00, 0x00, 0xff, 0xff, 0x01, 0x00, 0x00, 0xff, 0xff}
 
 type deflaterPool struct {
+	pool   []*deflater
 	serial uint64
 	num    uint64
-	pool   []*deflater
 }
 
 // 初始化deflaterPool
@@ -37,18 +37,18 @@ func (c *deflaterPool) initialize(options PermessageDeflate, limit int) *deflate
 // Select 从deflaterPool中选择一个deflater对象
 // Select a deflater object from the deflaterPool
 func (c *deflaterPool) Select() *deflater {
-	var j = atomic.AddUint64(&c.serial, 1) & (c.num - 1)
+	j := atomic.AddUint64(&c.serial, 1) & (c.num - 1)
 	return c.pool[j]
 }
 
 type deflater struct {
-	dpsLocker sync.Mutex
+	dpsReader io.ReadCloser
+	dpsBuffer *bytes.Buffer
+	cpsWriter *flate.Writer
 	buf       []byte
 	limit     int
-	dpsBuffer *bytes.Buffer
-	dpsReader io.ReadCloser
+	dpsLocker sync.Mutex
 	cpsLocker sync.Mutex
-	cpsWriter *flate.Writer
 }
 
 // 初始化deflater
@@ -90,7 +90,7 @@ func (c *deflater) Decompress(src *bytes.Buffer, dict []byte) (*bytes.Buffer, er
 	if _, err := io.CopyBuffer(c.dpsBuffer, reader, c.buf); err != nil {
 		return nil, err
 	}
-	var dst = binaryPool.Get(c.dpsBuffer.Len())
+	dst := binaryPool.Get(c.dpsBuffer.Len())
 	_, _ = c.dpsBuffer.WriteTo(dst)
 	return dst, nil
 }
@@ -122,9 +122,9 @@ func compressTo(cpsWriter *flate.Writer, r io.WriterTo, w io.Writer, dict []byte
 // 滑动窗口
 // Sliding window
 type slideWindow struct {
-	enabled bool
 	dict    []byte
 	size    int
+	enabled bool
 }
 
 // 初始化滑动窗口
@@ -147,9 +147,9 @@ func (c *slideWindow) Write(p []byte) (int, error) {
 		return 0, nil
 	}
 
-	var total = len(p)
-	var n = total
-	var length = len(c.dict)
+	total := len(p)
+	n := total
+	length := len(c.dict)
 	if n+length <= c.size {
 		c.dict = append(c.dict, p...)
 		return total, nil
@@ -174,7 +174,7 @@ func (c *slideWindow) Write(p []byte) (int, error) {
 // 生成请求头
 // Generate request headers
 func (c *PermessageDeflate) genRequestHeader() string {
-	var options = make([]string, 0, 5)
+	options := make([]string, 0, 5)
 	options = append(options, internal.PermessageDeflate)
 	if !c.ServerContextTakeover {
 		options = append(options, internal.ServerNoContextTakeover)
@@ -196,7 +196,7 @@ func (c *PermessageDeflate) genRequestHeader() string {
 // 生成响应头
 // Generate response headers
 func (c *PermessageDeflate) genResponseHeader() string {
-	var options = make([]string, 0, 5)
+	options := make([]string, 0, 5)
 	options = append(options, internal.PermessageDeflate)
 	if !c.ServerContextTakeover {
 		options = append(options, internal.ServerNoContextTakeover)
@@ -216,16 +216,16 @@ func (c *PermessageDeflate) genResponseHeader() string {
 // 压缩拓展协商
 // Negotiation of compression parameters
 func permessageNegotiation(str string) PermessageDeflate {
-	var options = PermessageDeflate{
+	options := PermessageDeflate{
 		ServerContextTakeover: true,
 		ClientContextTakeover: true,
 		ServerMaxWindowBits:   15,
 		ClientMaxWindowBits:   15,
 	}
 
-	var ss = internal.Split(str, ";")
+	ss := internal.Split(str, ";")
 	for _, s := range ss {
-		var pair = strings.SplitN(s, "=", 2)
+		pair := strings.SplitN(s, "=", 2)
 		switch pair[0] {
 		case internal.PermessageDeflate:
 		case internal.ServerNoContextTakeover:

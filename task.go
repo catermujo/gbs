@@ -10,19 +10,15 @@ type (
 	// 任务队列
 	// Task queue
 	workerQueue struct {
-		// mu 互斥锁
-		// mutex
-		mu sync.Mutex
-
-		// q 双端队列，用于存储异步任务
 		// double-ended queue to store asynchronous jobs
 		q internal.Deque[asyncJob]
 
-		// maxConcurrency 最大并发数
+		// mutex
+		mu sync.Mutex
+
 		// maximum concurrency
 		maxConcurrency int32
 
-		// curConcurrency 当前并发数
 		// current concurrency
 		curConcurrency int32
 	}
@@ -56,7 +52,7 @@ func (c *workerQueue) getJob(newJob asyncJob, delta int32) asyncJob {
 	if c.curConcurrency >= c.maxConcurrency {
 		return nil
 	}
-	var job = c.q.PopFront()
+	job := c.q.PopFront()
 	if job == nil {
 		return nil
 	}

@@ -16,23 +16,23 @@ import (
 
 // 测试同步读
 func TestReadSync(t *testing.T) {
-	var mu = &sync.Mutex{}
+	mu := &sync.Mutex{}
 	var listA []string
 	var listB []string
 	const count = 1000
-	var wg = &sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 	wg.Add(count)
 
-	var serverHandler = new(webSocketMocker)
-	var clientHandler = new(webSocketMocker)
-	var serverOption = &ServerOption{PermessageDeflate: PermessageDeflate{
+	serverHandler := new(webSocketMocker)
+	clientHandler := new(webSocketMocker)
+	serverOption := &ServerOption{PermessageDeflate: PermessageDeflate{
 		Enabled:               true,
 		ServerContextTakeover: true,
 		ClientContextTakeover: false,
 		ServerMaxWindowBits:   10,
 		ClientMaxWindowBits:   10,
 	}}
-	var clientOption = &ClientOption{PermessageDeflate: PermessageDeflate{
+	clientOption := &ClientOption{PermessageDeflate: PermessageDeflate{
 		Enabled:               true,
 		ServerContextTakeover: true,
 		ClientContextTakeover: true,
@@ -50,8 +50,8 @@ func TestReadSync(t *testing.T) {
 	go client.ReadLoop()
 
 	for i := 0; i < count; i++ {
-		var n = internal.AlphabetNumeric.Intn(1024)
-		var message = internal.AlphabetNumeric.Generate(n)
+		n := internal.AlphabetNumeric.Intn(1024)
+		message := internal.AlphabetNumeric.Generate(n)
 		listA = append(listA, string(message))
 		client.WriteAsync(OpcodeText, message, nil)
 	}
@@ -65,22 +65,22 @@ var testdata []byte
 
 type testRow struct {
 	Title    string `json:"title"`
-	Fin      bool   `json:"fin"`
-	Opcode   uint8  `json:"opcode"`
-	Length   int    `json:"length"`
 	Payload  string `json:"payload"`
-	RSV2     bool   `json:"rsv2"`
 	Expected struct {
 		Event  string `json:"event"`
-		Code   uint16 `json:"code"`
 		Reason string `json:"reason"`
+		Code   uint16 `json:"code"`
 	} `json:"expected"`
+	Length int   `json:"length"`
+	Fin    bool  `json:"fin"`
+	Opcode uint8 `json:"opcode"`
+	RSV2   bool  `json:"rsv2"`
 }
 
 func TestRead(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
-	var items = make([]testRow, 0)
+	items := make([]testRow, 0)
 	if err := json.Unmarshal(testdata, &items); err != nil {
 		as.NoError(err)
 		return
@@ -100,19 +100,19 @@ func TestRead(t *testing.T) {
 			payload = p
 		}
 
-		var wg = &sync.WaitGroup{}
+		wg := &sync.WaitGroup{}
 		wg.Add(1)
 
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{
 			ParallelEnabled:     true,
 			CheckUtf8Enabled:    false,
 			ReadMaxPayloadSize:  1024 * 1024,
 			WriteMaxPayloadSize: 16 * 1024 * 1024,
 			PermessageDeflate:   PermessageDeflate{Enabled: true},
 		}
-		var clientOption = &ClientOption{
+		clientOption := &ClientOption{
 			ParallelEnabled:     true,
 			PermessageDeflate:   PermessageDeflate{Enabled: true, ServerContextTakeover: true, ClientContextTakeover: true},
 			CheckUtf8Enabled:    true,
@@ -160,19 +160,19 @@ func TestRead(t *testing.T) {
 }
 
 func TestSegments(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	t.Run("valid segments", func(t *testing.T) {
-		var wg = &sync.WaitGroup{}
+		wg := &sync.WaitGroup{}
 		wg.Add(1)
 
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{}
-		var clientOption = &ClientOption{}
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{}
+		clientOption := &ClientOption{}
 
-		var s1 = internal.AlphabetNumeric.Generate(16)
-		var s2 = internal.AlphabetNumeric.Generate(16)
+		s1 := internal.AlphabetNumeric.Generate(16)
+		s2 := internal.AlphabetNumeric.Generate(16)
 		serverHandler.onMessage = func(socket *Conn, message *Message) {
 			as.Equal(string(s1)+string(s2), message.Data.String())
 			wg.Done()
@@ -190,16 +190,16 @@ func TestSegments(t *testing.T) {
 	})
 
 	t.Run("long segments", func(t *testing.T) {
-		var wg = &sync.WaitGroup{}
+		wg := &sync.WaitGroup{}
 		wg.Add(1)
 
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{ReadMaxPayloadSize: 16}
-		var clientOption = &ClientOption{}
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{ReadMaxPayloadSize: 16}
+		clientOption := &ClientOption{}
 
-		var s1 = internal.AlphabetNumeric.Generate(16)
-		var s2 = internal.AlphabetNumeric.Generate(16)
+		s1 := internal.AlphabetNumeric.Generate(16)
+		s2 := internal.AlphabetNumeric.Generate(16)
 		serverHandler.onClose = func(socket *Conn, err error) {
 			as.Error(err)
 			wg.Done()
@@ -217,16 +217,16 @@ func TestSegments(t *testing.T) {
 	})
 
 	t.Run("invalid segments", func(t *testing.T) {
-		var wg = &sync.WaitGroup{}
+		wg := &sync.WaitGroup{}
 		wg.Add(1)
 
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{}
-		var clientOption = &ClientOption{}
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{}
+		clientOption := &ClientOption{}
 
-		var s1 = internal.AlphabetNumeric.Generate(16)
-		var s2 = internal.AlphabetNumeric.Generate(16)
+		s1 := internal.AlphabetNumeric.Generate(16)
+		s2 := internal.AlphabetNumeric.Generate(16)
 		serverHandler.onClose = func(socket *Conn, err error) {
 			as.Error(err)
 			wg.Done()
@@ -244,15 +244,15 @@ func TestSegments(t *testing.T) {
 	})
 
 	t.Run("illegal compression", func(t *testing.T) {
-		var wg = &sync.WaitGroup{}
+		wg := &sync.WaitGroup{}
 		wg.Add(1)
 
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{}
-		var clientOption = &ClientOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{}
+		clientOption := &ClientOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
 
-		var s1 = internal.AlphabetNumeric.Generate(1024)
+		s1 := internal.AlphabetNumeric.Generate(1024)
 		serverHandler.onClose = func(socket *Conn, err error) {
 			as.Error(err)
 			wg.Done()
@@ -269,13 +269,13 @@ func TestSegments(t *testing.T) {
 	})
 
 	t.Run("decompress error", func(t *testing.T) {
-		var wg = &sync.WaitGroup{}
+		wg := &sync.WaitGroup{}
 		wg.Add(1)
 
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
-		var clientOption = &ClientOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
+		clientOption := &ClientOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
 
 		serverHandler.onClose = func(socket *Conn, err error) {
 			as.Error(err)
@@ -302,7 +302,7 @@ func TestSegments(t *testing.T) {
 }
 
 func TestMessage(t *testing.T) {
-	var msg = &Message{
+	msg := &Message{
 		Opcode: OpcodeText,
 		Data:   bytes.NewBufferString("1234"),
 	}
@@ -314,8 +314,8 @@ func TestFrameHeader_Parse(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		s, c := net.Pipe()
 		c.Close()
-		var fh = frameHeader{}
-		var _, err = fh.Parse(s)
+		fh := frameHeader{}
+		_, err := fh.Parse(s)
 		assert.Error(t, err)
 	})
 
@@ -329,8 +329,8 @@ func TestFrameHeader_Parse(t *testing.T) {
 		}()
 
 		time.Sleep(100 * time.Millisecond)
-		var fh = frameHeader{}
-		var _, err = fh.Parse(s)
+		fh := frameHeader{}
+		_, err := fh.Parse(s)
 		assert.Error(t, err)
 	})
 
@@ -344,8 +344,8 @@ func TestFrameHeader_Parse(t *testing.T) {
 		}()
 
 		time.Sleep(100 * time.Millisecond)
-		var fh = frameHeader{}
-		var _, err = fh.Parse(s)
+		fh := frameHeader{}
+		_, err := fh.Parse(s)
 		assert.Error(t, err)
 	})
 
@@ -359,18 +359,18 @@ func TestFrameHeader_Parse(t *testing.T) {
 		}()
 
 		time.Sleep(100 * time.Millisecond)
-		var fh = frameHeader{}
-		var _, err = fh.Parse(s)
+		fh := frameHeader{}
+		_, err := fh.Parse(s)
 		assert.Error(t, err)
 	})
 }
 
 func TestConn_ReadMessage(t *testing.T) {
 	t.Run("", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var serverHandler = &webSocketMocker{}
+		addr := ":" + nextPort()
+		serverHandler := &webSocketMocker{}
 		serverHandler.onOpen = func(socket *Conn) {
-			var p = []byte("123")
+			p := []byte("123")
 			frame, _ := socket.genFrame(OpcodePing, internal.Bytes(p), frameConfig{
 				fin:           true,
 				compress:      socket.pd.Enabled,
@@ -380,7 +380,7 @@ func TestConn_ReadMessage(t *testing.T) {
 			socket.conn.Write(frame.Bytes()[:2])
 			socket.conn.Close()
 		}
-		var server = NewServer(serverHandler, nil)
+		server := NewServer(serverHandler, nil)
 		go server.Run(addr)
 
 		time.Sleep(100 * time.Millisecond)
@@ -397,10 +397,10 @@ func TestConn_ReadMessage(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var serverHandler = &webSocketMocker{}
+		addr := ":" + nextPort()
+		serverHandler := &webSocketMocker{}
 		serverHandler.onOpen = func(socket *Conn) {
-			var p = []byte("123")
+			p := []byte("123")
 			frame, _ := socket.genFrame(OpcodeText, internal.Bytes(p), frameConfig{
 				fin:           true,
 				compress:      socket.pd.Enabled,
@@ -410,7 +410,7 @@ func TestConn_ReadMessage(t *testing.T) {
 			socket.conn.Write(frame.Bytes()[:2])
 			socket.conn.Close()
 		}
-		var server = NewServer(serverHandler, nil)
+		server := NewServer(serverHandler, nil)
 		go server.Run(addr)
 
 		time.Sleep(100 * time.Millisecond)

@@ -13,7 +13,7 @@ import (
 
 func TestSlideWindow(t *testing.T) {
 	t.Run("", func(t *testing.T) {
-		var sw = new(slideWindow).initialize(nil, 3)
+		sw := new(slideWindow).initialize(nil, 3)
 		sw.Write([]byte("abc"))
 		assert.Equal(t, string(sw.dict), "abc")
 
@@ -25,7 +25,7 @@ func TestSlideWindow(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var sw = new(slideWindow).initialize(nil, 3)
+		sw := new(slideWindow).initialize(nil, 3)
 		sw.Write([]byte("abc"))
 		assert.Equal(t, string(sw.dict), "abc")
 
@@ -35,9 +35,9 @@ func TestSlideWindow(t *testing.T) {
 
 	t.Run("", func(t *testing.T) {
 		const size = 4 * 1024
-		var sw = slideWindow{enabled: true, size: size}
+		sw := slideWindow{enabled: true, size: size}
 		for i := 0; i < 1000; i++ {
-			var n = internal.AlphabetNumeric.Intn(100)
+			n := internal.AlphabetNumeric.Intn(100)
 			sw.Write(internal.AlphabetNumeric.Generate(n))
 		}
 		assert.Equal(t, len(sw.dict), size)
@@ -46,9 +46,9 @@ func TestSlideWindow(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		const size = 4 * 1024
 		for i := 0; i < 10; i++ {
-			var sw = slideWindow{enabled: true, size: size, dict: make([]byte, internal.AlphabetNumeric.Intn(size))}
+			sw := slideWindow{enabled: true, size: size, dict: make([]byte, internal.AlphabetNumeric.Intn(size))}
 			for j := 0; j < 1000; j++ {
-				var n = internal.AlphabetNumeric.Intn(100)
+				n := internal.AlphabetNumeric.Intn(100)
 				sw.Write(internal.AlphabetNumeric.Generate(n))
 			}
 			assert.Equal(t, len(sw.dict), size)
@@ -58,7 +58,7 @@ func TestSlideWindow(t *testing.T) {
 
 func TestNegotiation(t *testing.T) {
 	t.Run("", func(t *testing.T) {
-		var pd = permessageNegotiation("permessage-deflate; client_no_context_takeover; client_max_window_bits=9")
+		pd := permessageNegotiation("permessage-deflate; client_no_context_takeover; client_max_window_bits=9")
 		assert.Equal(t, pd.ClientMaxWindowBits, 9)
 		assert.Equal(t, pd.ServerMaxWindowBits, 15)
 		assert.True(t, pd.ServerContextTakeover)
@@ -66,7 +66,7 @@ func TestNegotiation(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var pd = permessageNegotiation("permessage-deflate; client_max_window_bits=9; server_max_window_bits=10")
+		pd := permessageNegotiation("permessage-deflate; client_max_window_bits=9; server_max_window_bits=10")
 		assert.Equal(t, pd.ClientMaxWindowBits, 9)
 		assert.Equal(t, pd.ServerMaxWindowBits, 10)
 		assert.True(t, pd.ServerContextTakeover)
@@ -76,8 +76,8 @@ func TestNegotiation(t *testing.T) {
 
 func TestPermessageNegotiation(t *testing.T) {
 	t.Run("ok 1", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var server = NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
+		addr := ":" + nextPort()
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,
@@ -103,8 +103,8 @@ func TestPermessageNegotiation(t *testing.T) {
 	})
 
 	t.Run("ok 2", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var server = NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
+		addr := ":" + nextPort()
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: false,
 			ClientContextTakeover: false,
@@ -130,8 +130,8 @@ func TestPermessageNegotiation(t *testing.T) {
 	})
 
 	t.Run("ok 3", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var server = NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
+		addr := ":" + nextPort()
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,
@@ -157,12 +157,12 @@ func TestPermessageNegotiation(t *testing.T) {
 	})
 
 	t.Run("ok 4", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var serverHandler = &webSocketMocker{}
+		addr := ":" + nextPort()
+		serverHandler := &webSocketMocker{}
 		serverHandler.onOpen = func(socket *Conn) {
 			socket.WriteMessage(OpcodeText, internal.AlphabetNumeric.Generate(1024))
 		}
-		var server = NewServer(serverHandler, &ServerOption{PermessageDeflate: PermessageDeflate{
+		server := NewServer(serverHandler, &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,
@@ -185,12 +185,12 @@ func TestPermessageNegotiation(t *testing.T) {
 	})
 
 	t.Run("ok 5", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var serverHandler = &webSocketMocker{}
+		addr := ":" + nextPort()
+		serverHandler := &webSocketMocker{}
 		serverHandler.onMessage = func(socket *Conn, message *Message) {
 			println(message.Data.String())
 		}
-		var server = NewServer(serverHandler, &ServerOption{PermessageDeflate: PermessageDeflate{
+		server := NewServer(serverHandler, &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,
@@ -219,9 +219,9 @@ func TestPermessageNegotiation(t *testing.T) {
 	})
 
 	t.Run("fail", func(t *testing.T) {
-		var addr = ":" + nextPort()
-		var serverHandler = &webSocketMocker{}
-		var server = NewServer(serverHandler, &ServerOption{PermessageDeflate: PermessageDeflate{
+		addr := ":" + nextPort()
+		serverHandler := &webSocketMocker{}
+		server := NewServer(serverHandler, &ServerOption{PermessageDeflate: PermessageDeflate{
 			Enabled:               true,
 			ServerContextTakeover: true,
 			ClientContextTakeover: true,

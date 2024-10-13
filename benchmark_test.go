@@ -27,8 +27,8 @@ func (m benchConn) Write(p []byte) (n int, err error) {
 
 func BenchmarkConn_WriteMessage(b *testing.B) {
 	b.Run("compress disabled", func(b *testing.B) {
-		var upgrader = NewUpgrader(&BuiltinEventHandler{}, nil)
-		var conn = &Conn{
+		upgrader := NewUpgrader(&BuiltinEventHandler{}, nil)
+		conn := &Conn{
 			conn:   &benchConn{},
 			config: upgrader.option.getConfig(),
 		}
@@ -38,14 +38,14 @@ func BenchmarkConn_WriteMessage(b *testing.B) {
 	})
 
 	b.Run("compress enabled", func(b *testing.B) {
-		var upgrader = NewUpgrader(&BuiltinEventHandler{}, &ServerOption{
+		upgrader := NewUpgrader(&BuiltinEventHandler{}, &ServerOption{
 			PermessageDeflate: PermessageDeflate{
 				Enabled:  true,
 				PoolSize: 64,
 			},
 		})
-		var config = upgrader.option.getConfig()
-		var conn = &Conn{
+		config := upgrader.option.getConfig()
+		conn := &Conn{
 			conn:     &benchConn{},
 			pd:       PermessageDeflate{Enabled: true},
 			config:   config,
@@ -58,25 +58,25 @@ func BenchmarkConn_WriteMessage(b *testing.B) {
 }
 
 func BenchmarkConn_ReadMessage(b *testing.B) {
-	var handler = &webSocketMocker{}
+	handler := &webSocketMocker{}
 	handler.onMessage = func(socket *Conn, message *Message) { _ = message.Close() }
 
 	b.Run("compress disabled", func(b *testing.B) {
-		var upgrader = NewUpgrader(handler, nil)
-		var conn1 = &Conn{
+		upgrader := NewUpgrader(handler, nil)
+		conn1 := &Conn{
 			isServer: false,
 			conn:     &benchConn{},
 			config:   upgrader.option.getConfig(),
 		}
-		var buf, _ = conn1.genFrame(OpcodeText, internal.Bytes(githubData), frameConfig{
+		buf, _ := conn1.genFrame(OpcodeText, internal.Bytes(githubData), frameConfig{
 			fin:           true,
 			compress:      conn1.pd.Enabled,
 			broadcast:     false,
 			checkEncoding: false,
 		})
 
-		var reader = bytes.NewBuffer(buf.Bytes())
-		var conn2 = &Conn{
+		reader := bytes.NewBuffer(buf.Bytes())
+		conn2 := &Conn{
 			isServer: true,
 			conn:     &benchConn{},
 			br:       bufio.NewReader(reader),
@@ -91,11 +91,11 @@ func BenchmarkConn_ReadMessage(b *testing.B) {
 	})
 
 	b.Run("compress enabled", func(b *testing.B) {
-		var upgrader = NewUpgrader(handler, &ServerOption{
+		upgrader := NewUpgrader(handler, &ServerOption{
 			PermessageDeflate: PermessageDeflate{Enabled: true},
 		})
-		var config = upgrader.option.getConfig()
-		var conn1 = &Conn{
+		config := upgrader.option.getConfig()
+		conn1 := &Conn{
 			isServer: false,
 			conn:     &benchConn{},
 			pd:       upgrader.option.PermessageDeflate,
@@ -103,15 +103,15 @@ func BenchmarkConn_ReadMessage(b *testing.B) {
 			deflater: new(deflater),
 		}
 		conn1.deflater.initialize(false, conn1.pd, config.ReadMaxPayloadSize)
-		var buf, _ = conn1.genFrame(OpcodeText, internal.Bytes(githubData), frameConfig{
+		buf, _ := conn1.genFrame(OpcodeText, internal.Bytes(githubData), frameConfig{
 			fin:           true,
 			compress:      conn1.pd.Enabled,
 			broadcast:     false,
 			checkEncoding: false,
 		})
 
-		var reader = bytes.NewBuffer(buf.Bytes())
-		var conn2 = &Conn{
+		reader := bytes.NewBuffer(buf.Bytes())
+		conn2 := &Conn{
 			isServer: true,
 			conn:     &benchConn{},
 			br:       bufio.NewReader(reader),
@@ -190,8 +190,8 @@ func BenchmarkKlauspostDeCompress(b *testing.B) {
 }
 
 func BenchmarkMask(b *testing.B) {
-	var s1 = internal.AlphabetNumeric.Generate(1280)
-	var s2 = s1
+	s1 := internal.AlphabetNumeric.Generate(1280)
+	s2 := s1
 	var key [4]byte
 	binary.LittleEndian.PutUint32(key[:4], internal.AlphabetNumeric.Uint32())
 	for i := 0; i < b.N; i++ {
@@ -201,8 +201,8 @@ func BenchmarkMask(b *testing.B) {
 
 func BenchmarkConcurrentMap_ReadWrite(b *testing.B) {
 	const count = 1000000
-	var cm = NewConcurrentMap[string, uint8](64)
-	var keys = make([]string, 0, count)
+	cm := NewConcurrentMap[string, uint8](64)
+	keys := make([]string, 0, count)
 	for i := 0; i < count; i++ {
 		key := string(internal.AlphabetNumeric.Generate(16))
 		keys = append(keys, key)
@@ -211,10 +211,10 @@ func BenchmarkConcurrentMap_ReadWrite(b *testing.B) {
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
-		var i = 0
+		i := 0
 		for pb.Next() {
 			i++
-			var key = keys[i%count]
+			key := keys[i%count]
 			if i&15 == 0 {
 				cm.Store(key, 1)
 			} else {

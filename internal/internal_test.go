@@ -10,17 +10,17 @@ import (
 )
 
 func TestError(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	t.Run("", func(t *testing.T) {
-		var code = StatusCode(1000)
+		code := StatusCode(1000)
 		as.Equal(uint16(1000), code.Uint16())
 		as.Equal(hex.EncodeToString(code.Bytes()), "03e8")
 		as.Equal(code.Error() != "", true)
 	})
 
 	t.Run("", func(t *testing.T) {
-		var code = StatusCode(0)
+		code := StatusCode(0)
 		as.Equal(hex.EncodeToString(code.Bytes()), "")
 	})
 

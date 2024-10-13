@@ -35,13 +35,11 @@ func (c Opcode) isDataFrame() bool {
 }
 
 type CloseError struct {
-	// 关闭代码，表示关闭连接的原因
-	// Close code, indicating the reason for closing the connection
-	Code uint16
-
-	// 关闭原因，详细描述关闭的原因
 	// Close reason, providing a detailed description of the closure
 	Reason []byte
+
+	// Close code, indicating the reason for closing the connection
+	Code uint16
 }
 
 // Error 关闭错误的描述
@@ -203,7 +201,7 @@ func (c *frameHeader) SetMaskKey(offset int, key [4]byte) {
 // Consider having a random number generator for each client connection
 func (c *frameHeader) GenerateHeader(isServer bool, fin bool, compress bool, opcode Opcode, length int) (headerLength int, maskBytes []byte) {
 	headerLength = 2
-	var b0 = uint8(opcode)
+	b0 := uint8(opcode)
 	if fin {
 		b0 += 128
 	}
@@ -230,8 +228,8 @@ func (c *frameHeader) Parse(reader io.Reader) (int, error) {
 		return 0, err
 	}
 
-	var payloadLength = 0
-	var lengthCode = c.GetLengthCode()
+	payloadLength := 0
+	lengthCode := c.GetLengthCode()
 	switch lengthCode {
 	case 126:
 		if err := internal.ReadN(reader, (*c)[2:4]); err != nil {
@@ -248,7 +246,7 @@ func (c *frameHeader) Parse(reader io.Reader) (int, error) {
 		payloadLength = int(lengthCode)
 	}
 
-	var maskOn = c.GetMask()
+	maskOn := c.GetMask()
 	if maskOn {
 		if err := internal.ReadN(reader, (*c)[10:14]); err != nil {
 			return 0, err
@@ -265,17 +263,14 @@ func (c *frameHeader) GetMaskKey() []byte {
 }
 
 type Message struct {
-	// 是否压缩
-	// if the message is compressed
-	compressed bool
+	// content of the message
+	Data *bytes.Buffer
 
-	// 操作码
 	// opcode of the message
 	Opcode Opcode
 
-	// 消息内容
-	// content of the message
-	Data *bytes.Buffer
+	// if the message is compressed
+	compressed bool
 }
 
 // Read 从消息中读取数据到给定的字节切片 p 中
@@ -299,21 +294,17 @@ func (c *Message) Close() error {
 }
 
 type continuationFrame struct {
-	// 是否已初始化
-	// Indicates if the frame is initialized
-	initialized bool
+	// The buffer for the frame data
+	buffer *bytes.Buffer
 
-	// 是否压缩
-	// Indicates if the frame is compressed
-	compressed bool
-
-	// 操作码
 	// The opcode of the frame
 	opcode Opcode
 
-	// 缓冲区
-	// The buffer for the frame data
-	buffer *bytes.Buffer
+	// Indicates if the frame is initialized
+	initialized bool
+
+	// Indicates if the frame is compressed
+	compressed bool
 }
 
 // 重置延续帧的状态

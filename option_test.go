@@ -10,8 +10,8 @@ import (
 )
 
 func validateServerOption(as *assert.Assertions, u *Upgrader) {
-	var option = u.option
-	var config = u.option.getConfig()
+	option := u.option
+	config := u.option.getConfig()
 	as.Equal(config.ParallelEnabled, option.ParallelEnabled)
 	as.Equal(config.ParallelGolimit, option.ParallelGolimit)
 	as.Equal(config.ReadMaxPayloadSize, option.ReadMaxPayloadSize)
@@ -28,7 +28,7 @@ func validateServerOption(as *assert.Assertions, u *Upgrader) {
 }
 
 func validateClientOption(as *assert.Assertions, option *ClientOption) {
-	var config = option.getConfig()
+	config := option.getConfig()
 	as.Equal(config.ParallelEnabled, option.ParallelEnabled)
 	as.Equal(config.ParallelGolimit, option.ParallelGolimit)
 	as.Equal(config.ReadMaxPayloadSize, option.ReadMaxPayloadSize)
@@ -46,14 +46,14 @@ func validateClientOption(as *assert.Assertions, option *ClientOption) {
 
 // 检查默认配置
 func TestDefaultUpgrader(t *testing.T) {
-	var as = assert.New(t)
-	var updrader = NewUpgrader(new(BuiltinEventHandler), &ServerOption{
+	as := assert.New(t)
+	updrader := NewUpgrader(new(BuiltinEventHandler), &ServerOption{
 		ResponseHeader: http.Header{
 			"Sec-Websocket-Extensions": []string{"chat"},
 			"X-Server":                 []string{"gws"},
 		},
 	})
-	var config = updrader.option.getConfig()
+	config := updrader.option.getConfig()
 	as.Nil(config.cswPool)
 	as.Nil(config.dswPool)
 	as.Equal(false, config.ParallelEnabled)
@@ -77,10 +77,10 @@ func TestDefaultUpgrader(t *testing.T) {
 }
 
 func TestCompressServerOption(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	t.Run("", func(t *testing.T) {
-		var updrader = NewUpgrader(new(BuiltinEventHandler), &ServerOption{
+		updrader := NewUpgrader(new(BuiltinEventHandler), &ServerOption{
 			PermessageDeflate: PermessageDeflate{
 				Enabled:               true,
 				PoolSize:              60,
@@ -98,7 +98,7 @@ func TestCompressServerOption(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var updrader = NewUpgrader(new(BuiltinEventHandler), &ServerOption{
+		updrader := NewUpgrader(new(BuiltinEventHandler), &ServerOption{
 			PermessageDeflate: PermessageDeflate{
 				Enabled:               true,
 				ServerContextTakeover: true,
@@ -125,14 +125,14 @@ func TestCompressServerOption(t *testing.T) {
 }
 
 func TestReadServerOption(t *testing.T) {
-	var as = assert.New(t)
-	var updrader = NewUpgrader(new(BuiltinEventHandler), &ServerOption{
+	as := assert.New(t)
+	updrader := NewUpgrader(new(BuiltinEventHandler), &ServerOption{
 		ParallelEnabled:    true,
 		ParallelGolimit:    4,
 		ReadMaxPayloadSize: 1024,
 		HandshakeTimeout:   10 * time.Second,
 	})
-	var config = updrader.option.getConfig()
+	config := updrader.option.getConfig()
 	as.Equal(true, config.ParallelEnabled)
 	as.Equal(4, config.ParallelGolimit)
 	as.Equal(1024, config.ReadMaxPayloadSize)
@@ -141,11 +141,11 @@ func TestReadServerOption(t *testing.T) {
 }
 
 func TestDefaultClientOption(t *testing.T) {
-	var as = assert.New(t)
-	var option = &ClientOption{}
+	as := assert.New(t)
+	option := &ClientOption{}
 	NewClient(new(BuiltinEventHandler), option)
 
-	var config = option.getConfig()
+	config := option.getConfig()
 	as.Nil(config.brPool)
 	as.Nil(config.cswPool)
 	as.Nil(config.dswPool)
@@ -161,10 +161,10 @@ func TestDefaultClientOption(t *testing.T) {
 }
 
 func TestCompressClientOption(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	t.Run("", func(t *testing.T) {
-		var option = &ClientOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
+		option := &ClientOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
 		NewClient(new(BuiltinEventHandler), option)
 		as.Equal(true, option.PermessageDeflate.Enabled)
 		as.Equal(defaultCompressLevel, option.PermessageDeflate.Level)
@@ -175,7 +175,7 @@ func TestCompressClientOption(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var option = &ClientOption{
+		option := &ClientOption{
 			PermessageDeflate: PermessageDeflate{
 				Enabled:               true,
 				ServerContextTakeover: true,
@@ -191,7 +191,7 @@ func TestCompressClientOption(t *testing.T) {
 		as.Equal(1024, option.PermessageDeflate.Threshold)
 		validateClientOption(as, option)
 
-		var cfg = option.getConfig()
+		cfg := option.getConfig()
 		as.Nil(cfg.cswPool)
 		as.Nil(cfg.dswPool)
 	})
@@ -199,7 +199,7 @@ func TestCompressClientOption(t *testing.T) {
 
 func TestNewSession(t *testing.T) {
 	{
-		var option = &ServerOption{
+		option := &ServerOption{
 			NewSession: func() SessionStorage { return NewConcurrentMap[string, any](16) },
 		}
 		initServerOption(option)
@@ -208,7 +208,7 @@ func TestNewSession(t *testing.T) {
 	}
 
 	{
-		var option = &ClientOption{
+		option := &ClientOption{
 			NewSession: func() SessionStorage { return NewConcurrentMap[string, any](16) },
 		}
 		initClientOption(option)

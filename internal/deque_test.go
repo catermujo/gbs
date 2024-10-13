@@ -17,7 +17,7 @@ type Ordered interface {
 }
 
 func validate[T Ordered](q *Deque[T]) bool {
-	var sum = 0
+	sum := 0
 	for i := q.Get(q.head); i != nil; i = q.Get(i.next) {
 		sum++
 		next := q.Get(i.next)
@@ -56,7 +56,7 @@ func validate[T Ordered](q *Deque[T]) bool {
 }
 
 func TestDeque_Reset(t *testing.T) {
-	var q = New[int](8)
+	q := New[int](8)
 	q.PushBack(1)
 	q.PushBack(2)
 	q.PushBack(3)
@@ -66,7 +66,7 @@ func TestDeque_Reset(t *testing.T) {
 }
 
 func TestDeque_PopBack(t *testing.T) {
-	var q = New[int](8)
+	q := New[int](8)
 	assert.Equal(t, q.PopBack(), 0)
 
 	q.PushBack(1)
@@ -77,7 +77,7 @@ func TestQueue_Range(t *testing.T) {
 	const count = 1000
 
 	t.Run("", func(t *testing.T) {
-		var q = New[int](0)
+		q := New[int](0)
 		var a []int
 		for i := 0; i < count; i++ {
 			v := rand.Intn(count)
@@ -94,7 +94,7 @@ func TestQueue_Range(t *testing.T) {
 		})
 		assert.Equal(t, len(b), 100)
 
-		var i = 0
+		i := 0
 		for q.Len() > 0 {
 			v := q.PopFront()
 			assert.Equal(t, a[i], v)
@@ -103,7 +103,7 @@ func TestQueue_Range(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var q = New[int](0)
+		q := New[int](0)
 		for i := 0; i < count; i++ {
 			v := rand.Intn(count)
 			q.PushBack(v)
@@ -124,7 +124,7 @@ func TestQueue_Range(t *testing.T) {
 
 func TestQueue_Addr(t *testing.T) {
 	const count = 1000
-	var q = New[int](0)
+	q := New[int](0)
 	for i := 0; i < count; i++ {
 		v := rand.Intn(count)
 		if v&7 == 0 {
@@ -134,7 +134,7 @@ func TestQueue_Addr(t *testing.T) {
 		}
 	}
 
-	var sum = 0
+	sum := 0
 	for i := q.Get(q.head); i != nil; i = q.Get(i.next) {
 		sum++
 
@@ -158,7 +158,7 @@ func TestQueue_Addr(t *testing.T) {
 }
 
 func TestQueue_Pop(t *testing.T) {
-	var q = New[int](0)
+	q := New[int](0)
 	assert.Zero(t, q.Front())
 	assert.Zero(t, q.PopFront())
 
@@ -183,14 +183,14 @@ func TestQueue_Pop(t *testing.T) {
 
 func TestDeque_InsertAfter(t *testing.T) {
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
+		q := New[int](8)
 		assert.Nil(t, q.InsertAfter(1, 0))
 	})
 
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
+		q := New[int](8)
 		q.PushBack(1)
-		var node = q.PushBack(2)
+		node := q.PushBack(2)
 		q.PushBack(4)
 		q.InsertAfter(3, node.Addr())
 
@@ -205,10 +205,10 @@ func TestDeque_InsertAfter(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
+		q := New[int](8)
 		q.PushBack(1)
 		q.PushBack(2)
-		var node = q.PushBack(4)
+		node := q.PushBack(4)
 		q.InsertAfter(3, node.Addr())
 
 		var arr []int
@@ -223,14 +223,14 @@ func TestDeque_InsertAfter(t *testing.T) {
 
 func TestDeque_InsertBefore(t *testing.T) {
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
+		q := New[int](8)
 		assert.Nil(t, q.InsertBefore(1, 0))
 	})
 
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
+		q := New[int](8)
 		q.PushBack(1)
-		var node = q.PushBack(2)
+		node := q.PushBack(2)
 		q.PushBack(4)
 		q.InsertBefore(3, node.Addr())
 
@@ -245,8 +245,8 @@ func TestDeque_InsertBefore(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
-		var node = q.PushBack(1)
+		q := New[int](8)
+		node := q.PushBack(1)
 		q.PushBack(2)
 		q.PushBack(4)
 		q.InsertBefore(3, node.Addr())
@@ -262,16 +262,16 @@ func TestDeque_InsertBefore(t *testing.T) {
 }
 
 func TestDeque_Update(t *testing.T) {
-	var q = New[int](8)
-	var node = q.PushBack(1)
+	q := New[int](8)
+	node := q.PushBack(1)
 	q.Update(node.Addr(), 2)
 	assert.Equal(t, q.Get(node.Addr()).Value(), 2)
 }
 
 func TestDeque_Delete(t *testing.T) {
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
-		var node = q.PushBack(1)
+		q := New[int](8)
+		node := q.PushBack(1)
 		q.PushBack(2)
 		q.PushBack(3)
 		q.Remove(node.Addr())
@@ -286,9 +286,9 @@ func TestDeque_Delete(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
+		q := New[int](8)
 		q.PushBack(1)
-		var node = q.PushBack(2)
+		node := q.PushBack(2)
 		q.PushBack(3)
 		q.Remove(node.Addr())
 
@@ -302,10 +302,10 @@ func TestDeque_Delete(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
+		q := New[int](8)
 		q.PushBack(1)
 		q.PushBack(2)
-		var node = q.PushBack(3)
+		node := q.PushBack(3)
 		q.Remove(node.Addr())
 
 		var arr []int
@@ -318,8 +318,8 @@ func TestDeque_Delete(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
-		var q = New[int](8)
-		var node = q.PushBack(3)
+		q := New[int](8)
+		node := q.PushBack(3)
 		q.Remove(node.Addr())
 		assert.Equal(t, q.Len(), 0)
 		assert.True(t, validate(q))
@@ -327,12 +327,12 @@ func TestDeque_Delete(t *testing.T) {
 }
 
 func TestQueue_Random(t *testing.T) {
-	var count = 10000
-	var q = Deque[int]{}
-	var linkedlist = list.New()
+	count := 10000
+	q := Deque[int]{}
+	linkedlist := list.New()
 	for i := 0; i < count; i++ {
-		var flag = rand.Intn(13)
-		var val = rand.Int()
+		flag := rand.Intn(13)
+		val := rand.Int()
 		switch flag {
 		case 0, 1:
 			q.PushBack(val)
@@ -361,8 +361,8 @@ func TestQueue_Random(t *testing.T) {
 				linkedlist.MoveToFront(linkedlist.Back())
 			}
 		case 9:
-			var n = rand.Intn(10)
-			var index = 0
+			n := rand.Intn(10)
+			index := 0
 			for iter := q.Front(); iter != nil; iter = q.Get(iter.Next()) {
 				index++
 				if index >= n {
@@ -380,8 +380,8 @@ func TestQueue_Random(t *testing.T) {
 				}
 			}
 		case 10:
-			var n = rand.Intn(10)
-			var index = 0
+			n := rand.Intn(10)
+			index := 0
 			for iter := q.Front(); iter != nil; iter = q.Get(iter.Next()) {
 				index++
 				if index >= n {
@@ -399,8 +399,8 @@ func TestQueue_Random(t *testing.T) {
 				}
 			}
 		case 11, 12:
-			var n = rand.Intn(10)
-			var index = 0
+			n := rand.Intn(10)
+			index := 0
 			for iter := q.Front(); iter != nil; iter = q.Get(iter.Next()) {
 				index++
 				if index >= n {
@@ -424,14 +424,14 @@ func TestQueue_Random(t *testing.T) {
 
 	assert.True(t, validate(&q))
 	for i := linkedlist.Front(); i != nil; i = i.Next() {
-		var val = q.PopFront()
+		val := q.PopFront()
 		assert.Equal(t, i.Value, val)
 	}
 }
 
 func BenchmarkQueue_PushAndPop(b *testing.B) {
 	const count = 1000
-	var q = New[int](count)
+	q := New[int](count)
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < count/4; j++ {
 			q.PushBack(j)
@@ -449,18 +449,18 @@ func BenchmarkQueue_PushAndPop(b *testing.B) {
 }
 
 func TestDeque_Clone(t *testing.T) {
-	var h = New[int](8)
+	h := New[int](8)
 	h.PushBack(1)
 	h.PushBack(3)
 	h.PushBack(2)
 	h.PushBack(4)
 
-	var h1 = h.Clone()
-	var h2 = h
+	h1 := h.Clone()
+	h2 := h
 	assert.True(t, IsSameSlice(h.elements, h1.elements))
-	var addr = (uintptr)(unsafe.Pointer(&h.elements[0]))
-	var addr1 = (uintptr)(unsafe.Pointer(&h1.elements[0]))
-	var addr2 = (uintptr)(unsafe.Pointer(&h2.elements[0]))
+	addr := (uintptr)(unsafe.Pointer(&h.elements[0]))
+	addr1 := (uintptr)(unsafe.Pointer(&h1.elements[0]))
+	addr2 := (uintptr)(unsafe.Pointer(&h2.elements[0]))
 	assert.NotEqual(t, addr, addr1)
 	assert.Equal(t, addr, addr2)
 }

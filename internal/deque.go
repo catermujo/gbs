@@ -6,36 +6,31 @@ type (
 	Pointer uint32
 
 	Element[T any] struct {
-		prev, addr, next Pointer
-		value            T
+		value T
+		prev  Pointer
+		addr  Pointer
+		next  Pointer
 	}
 
-	// Deque 结构体表示一个双端队列
 	// Deque struct represents a double-ended queue
 	Deque[T any] struct {
-		// head 指向队列头部元素的位置
-		// points to the position of the head element in the queue
-		head Pointer
+		// template for creating new elements
+		template Element[T]
 
-		// tail 指向队列尾部元素的位置
-		// points to the position of the tail element in the queue
-		tail Pointer
-
-		// length 队列长度
-		// length of the queue
-		length int
-
-		// stack 存储空闲位置的栈
-		// store the stack of free positions
-		stack Stack[Pointer]
-
-		// elements 存储队列中的所有元素
 		// stores all the elements in the queue
 		elements []Element[T]
 
-		// template 创建新元素的模板
-		// template for creating new elements
-		template Element[T]
+		// store the stack of free positions
+		stack Stack[Pointer]
+
+		// points to the position of the head element in the queue
+		head Pointer
+
+		// points to the position of the tail element in the queue
+		tail Pointer
+
+		// length of the queue
+		length int
 	}
 )
 
@@ -307,7 +302,7 @@ func (c *Deque[T]) Remove(addr Pointer) {
 
 func (c *Deque[T]) doRemove(ele *Element[T]) {
 	var prev, next *Element[T] = nil, nil
-	var state = 0
+	state := 0
 	if !ele.prev.IsNil() {
 		prev = c.Get(ele.prev)
 		state += 1
@@ -347,7 +342,7 @@ func (c *Deque[T]) Range(f func(ele *Element[T]) bool) {
 // Clone 深拷贝
 // deep copy
 func (c *Deque[T]) Clone() *Deque[T] {
-	var v = *c
+	v := *c
 	v.elements = make([]Element[T], len(c.elements))
 	v.stack = make([]Pointer, len(c.stack))
 	copy(v.elements, c.elements)

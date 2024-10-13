@@ -15,28 +15,28 @@ import (
 func TestNewClient(t *testing.T) {
 	NewClient(new(BuiltinEventHandler), nil)
 	{
-		var option = &ClientOption{
+		option := &ClientOption{
 			Addr: "ws://127.0.0.1",
 		}
 		NewClient(new(BuiltinEventHandler), option)
 	}
 
 	{
-		var option = &ClientOption{
+		option := &ClientOption{
 			Addr: "wss://127.0.0.1",
 		}
 		NewClient(new(BuiltinEventHandler), option)
 	}
 
 	{
-		var option = &ClientOption{
+		option := &ClientOption{
 			Addr: "unix:///",
 		}
 		NewClient(new(BuiltinEventHandler), option)
 	}
 
 	{
-		var option = &ClientOption{
+		option := &ClientOption{
 			Addr: "tls://127.0.0.1",
 		}
 		NewClient(new(BuiltinEventHandler), option)
@@ -44,7 +44,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestNewClientFromConn(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	t.Run("ok", func(t *testing.T) {
 		server := NewServer(BuiltinEventHandler{}, nil)
@@ -74,7 +74,7 @@ func TestNewClientFromConn(t *testing.T) {
 }
 
 func TestClientHandshake(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 	option := &ClientOption{
 		RequestHeader:     http.Header{},
 		PermessageDeflate: PermessageDeflate{Enabled: true},
@@ -82,7 +82,7 @@ func TestClientHandshake(t *testing.T) {
 	option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 	option = initClientOption(option)
 	srv, cli := net.Pipe()
-	var d = &connector{
+	d := &connector{
 		option:          option,
 		conn:            cli,
 		eventHandler:    new(BuiltinEventHandler),
@@ -90,9 +90,9 @@ func TestClientHandshake(t *testing.T) {
 	}
 
 	go func() {
-		var text = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
+		text := "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
 		for {
-			var buf = make([]byte, 1024)
+			buf := make([]byte, 1024)
 			srv.Read(buf)
 			srv.Write([]byte(text))
 		}
@@ -104,7 +104,7 @@ func TestClientHandshake(t *testing.T) {
 }
 
 func TestClientHandshakeFail(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	t.Run("", func(t *testing.T) {
 		option := &ClientOption{
@@ -114,7 +114,7 @@ func TestClientHandshakeFail(t *testing.T) {
 		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 		option = initClientOption(option)
 		srv, cli := net.Pipe()
-		var d = &connector{
+		d := &connector{
 			option:          option,
 			conn:            cli,
 			secWebsocketKey: "1fTfP/qALD+eAWcU80P0bg==",
@@ -122,9 +122,9 @@ func TestClientHandshakeFail(t *testing.T) {
 		}
 
 		go func() {
-			var text = "HTTP/1.1 400 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
+			text := "HTTP/1.1 400 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
 			for {
-				var buf = make([]byte, 1024)
+				buf := make([]byte, 1024)
 				srv.Read(buf)
 				srv.Write([]byte(text))
 			}
@@ -141,7 +141,7 @@ func TestClientHandshakeFail(t *testing.T) {
 		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 		option = initClientOption(option)
 		srv, cli := net.Pipe()
-		var d = &connector{
+		d := &connector{
 			option:          option,
 			conn:            cli,
 			secWebsocketKey: "1fTfP/qALD+eAWcU80P0bg==",
@@ -149,9 +149,9 @@ func TestClientHandshakeFail(t *testing.T) {
 		}
 
 		go func() {
-			var text = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upg: rade\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
+			text := "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upg: rade\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
 			for {
-				var buf = make([]byte, 1024)
+				buf := make([]byte, 1024)
 				srv.Read(buf)
 				srv.Write([]byte(text))
 			}
@@ -167,7 +167,7 @@ func TestClientHandshakeFail(t *testing.T) {
 		}
 		option = initClientOption(option)
 		srv, cli := net.Pipe()
-		var d = &connector{
+		d := &connector{
 			option:          option,
 			conn:            cli,
 			secWebsocketKey: "1fTfP/qALD+eAWcU80P0bg==",
@@ -175,36 +175,9 @@ func TestClientHandshakeFail(t *testing.T) {
 		}
 
 		go func() {
-			var text = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: _ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
+			text := "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: _ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
 			for {
-				var buf = make([]byte, 1024)
-				srv.Read(buf)
-				srv.Write([]byte(text))
-			}
-		}()
-		_, _, err := d.handshake()
-		as.Error(err)
-	})
-
-	t.Run("", func(t *testing.T) {
-		option := &ClientOption{
-			PermessageDeflate: PermessageDeflate{Enabled: true},
-			RequestHeader:     http.Header{},
-		}
-		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
-		option = initClientOption(option)
-		srv, cli := net.Pipe()
-		var d = &connector{
-			option:          option,
-			conn:            cli,
-			secWebsocketKey: "1fTfP/qALD+eAWcU80P0bg==",
-			eventHandler:    new(BuiltinEventHandler),
-		}
-
-		go func() {
-			var text = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket1\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
-			for {
-				var buf = make([]byte, 1024)
+				buf := make([]byte, 1024)
 				srv.Read(buf)
 				srv.Write([]byte(text))
 			}
@@ -221,7 +194,7 @@ func TestClientHandshakeFail(t *testing.T) {
 		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 		option = initClientOption(option)
 		srv, cli := net.Pipe()
-		var d = &connector{
+		d := &connector{
 			option:          option,
 			conn:            cli,
 			secWebsocketKey: "1fTfP/qALD+eAWcU80P0bg==",
@@ -229,9 +202,36 @@ func TestClientHandshakeFail(t *testing.T) {
 		}
 
 		go func() {
-			var text = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket1\r\nConnection: Upgrade1\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
+			text := "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket1\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
 			for {
-				var buf = make([]byte, 1024)
+				buf := make([]byte, 1024)
+				srv.Read(buf)
+				srv.Write([]byte(text))
+			}
+		}()
+		_, _, err := d.handshake()
+		as.Error(err)
+	})
+
+	t.Run("", func(t *testing.T) {
+		option := &ClientOption{
+			PermessageDeflate: PermessageDeflate{Enabled: true},
+			RequestHeader:     http.Header{},
+		}
+		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
+		option = initClientOption(option)
+		srv, cli := net.Pipe()
+		d := &connector{
+			option:          option,
+			conn:            cli,
+			secWebsocketKey: "1fTfP/qALD+eAWcU80P0bg==",
+			eventHandler:    new(BuiltinEventHandler),
+		}
+
+		go func() {
+			text := "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket1\r\nConnection: Upgrade1\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
+			for {
+				buf := make([]byte, 1024)
 				srv.Read(buf)
 				srv.Write([]byte(text))
 			}
@@ -248,7 +248,7 @@ func TestClientHandshakeFail(t *testing.T) {
 		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 		option = initClientOption(option)
 		srv, cli := net.Pipe()
-		var d = &connector{
+		d := &connector{
 			option:          option,
 			conn:            cli,
 			secWebsocketKey: "1fTfP/qALD+eAWcU80P0bg==",
@@ -256,9 +256,9 @@ func TestClientHandshakeFail(t *testing.T) {
 		}
 
 		go func() {
-			var text = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Extensions: permessage-deflate\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
+			text := "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Extensions: permessage-deflate\r\nSec-WebSocket-Accept: ygR8UkmG67DM75dkgZzwplwlEEo=\r\n\r\n"
 			for {
-				var buf = make([]byte, 1024)
+				buf := make([]byte, 1024)
 				srv.Read(buf)
 				srv.Write([]byte(text))
 			}
@@ -321,7 +321,7 @@ BpA7MNLxiqss+rCbwf3NbWxEMiDQ2zRwVoafVFys7tjmv6t2Xck=
 `)
 
 func TestNewClientWSS(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	addr := "127.0.0.1:" + nextPort()
 	srv := NewServer(new(BuiltinEventHandler), nil)
@@ -384,7 +384,7 @@ func TestNewClient_WriteRequest(t *testing.T) {
 		srv, conn := net.Pipe()
 		go func() {
 			for {
-				var p = make([]byte, 1024)
+				p := make([]byte, 1024)
 				srv.Read(p)
 				time.Sleep(time.Second)
 			}

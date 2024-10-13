@@ -60,170 +60,129 @@ type (
 	// For gws client, it is recommended to enable contextual takeover and not modify the sliding window index to provide the best compatibility.
 	// For gws server, if you turn on context-side takeover, each connection takes up more memory, configure the sliding window index appropriately.
 	PermessageDeflate struct {
-		// 是否开启压缩
-		// Whether to turn on compression
-		Enabled bool
-
-		// 压缩级别
 		// Compress level
 		Level int
 
-		// 压缩阈值, 长度小于阈值的消息不会被压缩, 仅适用于无上下文接管模式.
 		// Compression threshold, messages below the threshold will not be compressed, only for context-free takeover mode.
 		Threshold int
 
-		// 压缩器内存池大小
-		// 数值越大竞争的概率越小, 但是会耗费大量内存
 		// Compressor memory pool size
 		// The higher the value the lower the probability of competition, but it will consume a lot of memory
 		PoolSize int
 
-		// 服务端上下文接管
-		// Server side context takeover
-		ServerContextTakeover bool
-
-		// 客户端上下文接管
-		// Client side context takeover
-		ClientContextTakeover bool
-
-		// 服务端滑动窗口指数
-		// 取值范围 8<=n<=15, 表示pow(2,n)个字节
 		// The server-side sliding window index
 		// Range 8<=n<=15, means pow(2,n) bytes.
 		ServerMaxWindowBits int
 
-		// 客户端滑动窗口指数
-		// 取值范围 8<=x<=15, 表示pow(2,n)个字节
 		// The client-side sliding window index
 		// Range 8<=n<=15, means pow(2,n) bytes.
 		ClientMaxWindowBits int
+
+		// Whether to turn on compression
+		Enabled bool
+
+		// Server side context takeover
+		ServerContextTakeover bool
+
+		// Client side context takeover
+		ClientContextTakeover bool
 	}
 
 	Config struct {
-		// bufio.Reader内存池
+		// Logging tools
+		Logger Logger
+
 		// Memory pool for bufio.Reader
 		brPool *internal.Pool[*bufio.Reader]
 
-		// 大文件压缩器
 		// Big File Compressor
 		bdPool *internal.Pool[*bigDeflater]
 
-		// 压缩器滑动窗口内存池
 		// Memory pool for compressor sliding window
 		cswPool *internal.Pool[[]byte]
 
-		// 解压器滑动窗口内存池
 		// Memory pool for decompressor sliding window
 		dswPool *internal.Pool[[]byte]
 
-		// 是否开启并行消息处理
-		// Whether to enable parallel message processing
-		ParallelEnabled bool
-
-		// (单个连接)用于并行消息处理的协程数量限制
-		// Limit on the number of concurrent goroutines used for parallel message processing (single connection)
-		ParallelGolimit int
-
-		// 最大读取的消息内容长度
-		// Maximum read message content length
-		ReadMaxPayloadSize int
-
-		// 读缓冲区的大小
-		// Size of the read buffer
-		ReadBufferSize int
-
-		// 最大写入的消息内容长度
-		// Maximum length of written message content
-		WriteMaxPayloadSize int
-
-		// 写缓冲区的大小, v1.4.5版本此参数被废弃
-		// Deprecated: Size of the write buffer, v1.4.5 version of this parameter is deprecated
-		WriteBufferSize int
-
-		// 是否检查文本utf8编码, 关闭性能会好点
-		// Whether to check the text utf8 encoding, turn off the performance will be better
-		CheckUtf8Enabled bool
-
-		// 消息回调(OnMessage)的恢复程序
 		// Message callback (OnMessage) recovery program
 		Recovery func(logger Logger)
 
-		// 日志工具
-		// Logging tools
-		Logger Logger
+		// Maximum read message content length
+		ReadMaxPayloadSize int
+
+		// Size of the read buffer
+		ReadBufferSize int
+
+		// Maximum length of written message content
+		WriteMaxPayloadSize int
+
+		// Deprecated: Size of the write buffer, v1.4.5 version of this parameter is deprecated
+		WriteBufferSize int
+
+		// Limit on the number of concurrent goroutines used for parallel message processing (single connection)
+		ParallelGolimit int
+
+		// Whether to check the text utf8 encoding, turn off the performance will be better
+		CheckUtf8Enabled bool
+
+		// Whether to enable parallel message processing
+		ParallelEnabled bool
 	}
 
 	// ServerOption 服务端配置
 	// Server configurations
 	ServerOption struct {
-		// 配置
-		// Configuration
-		config *Config
-
-		// 写缓冲区的大小, v1.4.5版本此参数被废弃
-		// Deprecated: Size of the write buffer, v1.4.5 version of this parameter is deprecated
-		WriteBufferSize int
-
-		// PermessageDeflate 配置
-		// PermessageDeflate configuration
-		PermessageDeflate PermessageDeflate
-
-		// 是否启用并行处理
-		// Whether parallel processing is enabled
-		ParallelEnabled bool
-
-		// 并行协程限制
-		// Parallel goroutine limit
-		ParallelGolimit int
-
-		// 读取最大负载大小
-		// Maximum payload size for reading
-		ReadMaxPayloadSize int
-
-		// 读取缓冲区大小
-		// Read buffer size
-		ReadBufferSize int
-
-		// 写入最大负载大小
-		// Maximum payload size for writing
-		WriteMaxPayloadSize int
-
-		// 是否启用 UTF-8 检查
-		// Whether UTF-8 check is enabled
-		CheckUtf8Enabled bool
-
-		// 日志记录器
 		// Logger
 		Logger Logger
 
-		// 恢复函数
-		// Recovery function
-		Recovery func(logger Logger)
+		// Create session storage space for custom SessionStorage implementations
+		NewSession func() SessionStorage
 
-		// TLS 设置
-		// TLS configuration
-		TlsConfig *tls.Config
+		// Authentication function for connection establishment requests
+		Authorize func(r *http.Request, session SessionStorage) bool
 
-		// 握手超时时间
-		// Handshake timeout duration
-		HandshakeTimeout time.Duration
-
-		// WebSocket 子协议, 握手失败会断开连接
-		// WebSocket sub-protocol, handshake failure disconnects the connection
-		SubProtocols []string
-
-		// 额外的响应头(可能不受客户端支持)
 		// Additional response headers (may not be supported by the client)
 		// https://www.rfc-editor.org/rfc/rfc6455.html#section-1.3
 		ResponseHeader http.Header
 
-		// 鉴权函数，用于连接建立的请求
-		// Authentication function for connection establishment requests
-		Authorize func(r *http.Request, session SessionStorage) bool
+		// Configuration
+		config *Config
 
-		// 创建 session 存储空间，用于自定义 SessionStorage 实现
-		// Create session storage space for custom SessionStorage implementations
-		NewSession func() SessionStorage
+		// TLS configuration
+		TlsConfig *tls.Config
+
+		// Recovery function
+		Recovery func(logger Logger)
+
+		// WebSocket sub-protocol, handshake failure disconnects the connection
+		SubProtocols []string
+
+		// PermessageDeflate configuration
+		PermessageDeflate PermessageDeflate
+
+		// Handshake timeout duration
+		HandshakeTimeout time.Duration
+
+		// Maximum payload size for writing
+		WriteMaxPayloadSize int
+
+		// Read buffer size
+		ReadBufferSize int
+
+		// Maximum payload size for reading
+		ReadMaxPayloadSize int
+
+		// Parallel goroutine limit
+		ParallelGolimit int
+
+		// Deprecated: Size of the write buffer, v1.4.5 version of this parameter is deprecated
+		WriteBufferSize int
+
+		// Whether UTF-8 check is enabled
+		CheckUtf8Enabled bool
+
+		// Whether parallel processing is enabled
+		ParallelEnabled bool
 	}
 )
 
@@ -324,18 +283,18 @@ func initServerOption(c *ServerOption) *ServerOption {
 	}
 
 	if c.PermessageDeflate.Enabled {
-		c.config.bdPool = internal.NewPool[*bigDeflater](func() *bigDeflater {
+		c.config.bdPool = internal.NewPool(func() *bigDeflater {
 			return newBigDeflater(true, c.PermessageDeflate)
 		})
 		if c.PermessageDeflate.ServerContextTakeover {
 			windowSize := internal.BinaryPow(c.PermessageDeflate.ServerMaxWindowBits)
-			c.config.cswPool = internal.NewPool[[]byte](func() []byte {
+			c.config.cswPool = internal.NewPool(func() []byte {
 				return make([]byte, 0, windowSize)
 			})
 		}
 		if c.PermessageDeflate.ClientContextTakeover {
 			windowSize := internal.BinaryPow(c.PermessageDeflate.ClientMaxWindowBits)
-			c.config.dswPool = internal.NewPool[[]byte](func() []byte {
+			c.config.dswPool = internal.NewPool(func() []byte {
 				return make([]byte, 0, windowSize)
 			})
 		}
@@ -351,64 +310,11 @@ func (c *ServerOption) getConfig() *Config { return c.config }
 // ClientOption 客户端配置
 // Client configurations
 type ClientOption struct {
-	// 写缓冲区的大小, v1.4.5版本此参数被废弃
-	// Deprecated: Size of the write buffer, v1.4.5 version of this parameter is deprecated
-	WriteBufferSize int
-
-	// PermessageDeflate 配置
-	// PermessageDeflate configuration
-	PermessageDeflate PermessageDeflate
-
-	// 是否启用并行处理
-	// Whether parallel processing is enabled
-	ParallelEnabled bool
-
-	// 并行协程限制
-	// Parallel goroutine limit
-	ParallelGolimit int
-
-	// 读取最大负载大小
-	// Maximum payload size for reading
-	ReadMaxPayloadSize int
-
-	// 读取缓冲区大小
-	// Read buffer size
-	ReadBufferSize int
-
-	// 写入最大负载大小
-	// Maximum payload size for writing
-	WriteMaxPayloadSize int
-
-	// 是否启用 UTF-8 检查
-	// Whether UTF-8 check is enabled
-	CheckUtf8Enabled bool
-
-	// 日志记录器
-	// Logger
 	Logger Logger
 
-	// 恢复函数
-	// Recovery function
-	Recovery func(logger Logger)
+	// For custom SessionStorage implementations
+	NewSession func() SessionStorage
 
-	// 连接地址, 例如 wss://example.com/connect
-	// Server address, e.g., wss://example.com/connect
-	Addr string
-
-	// 额外的请求头
-	// Extra request headers
-	RequestHeader http.Header
-
-	// 握手超时时间
-	// Handshake timeout duration
-	HandshakeTimeout time.Duration
-
-	// TLS 设置
-	// TLS configuration
-	TlsConfig *tls.Config
-
-	// 拨号器
-	// 默认是返回 net.Dialer 实例, 也可以用于设置代理.
 	// The default is to return the net.Dialer instance.
 	// Can also be used to set a proxy, for example:
 	// NewDialer: func() (proxy.Dialer, error) {
@@ -416,10 +322,44 @@ type ClientOption struct {
 	// },
 	NewDialer func() (Dialer, error)
 
-	// 创建 session 存储空间
-	// 用于自定义 SessionStorage 实现
-	// For custom SessionStorage implementations
-	NewSession func() SessionStorage
+	// TLS configuration
+	TlsConfig *tls.Config
+
+	// Extra request headers
+	RequestHeader http.Header
+
+	// Recovery function
+	Recovery func(logger Logger)
+
+	// Server address, e.g., wss://example.com/connect
+	Addr string
+
+	// PermessageDeflate configuration
+	PermessageDeflate PermessageDeflate
+
+	// Maximum payload size for reading
+	ReadMaxPayloadSize int
+
+	// Maximum payload size for writing
+	WriteMaxPayloadSize int
+
+	// Read buffer size
+	ReadBufferSize int
+
+	// Handshake timeout duration
+	HandshakeTimeout time.Duration
+
+	// Parallel goroutine limit
+	ParallelGolimit int
+
+	// Deprecated: Size of the write buffer, v1.4.5 version of this parameter is deprecated
+	WriteBufferSize int
+
+	// Whether UTF-8 check is enabled
+	CheckUtf8Enabled bool
+
+	// Whether parallel processing is enabled
+	ParallelEnabled bool
 }
 
 // 初始化客户端配置

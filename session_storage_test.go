@@ -9,19 +9,19 @@ import (
 )
 
 func TestMap(t *testing.T) {
-	var as = assert.New(t)
-	var m1 = make(map[string]any)
-	var m2 = newSmap()
-	var count = internal.AlphabetNumeric.Intn(1000)
+	as := assert.New(t)
+	m1 := make(map[string]any)
+	m2 := newSmap()
+	count := internal.AlphabetNumeric.Intn(1000)
 	for i := 0; i < count; i++ {
-		var key = string(internal.AlphabetNumeric.Generate(10))
-		var val = internal.AlphabetNumeric.Uint32()
+		key := string(internal.AlphabetNumeric.Generate(10))
+		val := internal.AlphabetNumeric.Uint32()
 		m1[key] = val
 		m2.Store(key, val)
 	}
 
-	var keys = make([]string, 0)
-	for k, _ := range m1 {
+	keys := make([]string, 0)
+	for k := range m1 {
 		keys = append(keys, k)
 	}
 	for i := 0; i < len(keys)/2; i++ {
@@ -38,8 +38,8 @@ func TestMap(t *testing.T) {
 }
 
 func TestSliceMap(t *testing.T) {
-	var as = assert.New(t)
-	var m = newSmap()
+	as := assert.New(t)
+	m := newSmap()
 	m.Store("hong", 1)
 	m.Store("mei", 2)
 	m.Store("ming", 3)
@@ -60,13 +60,13 @@ func TestSliceMap(t *testing.T) {
 }
 
 func TestMap_Range(t *testing.T) {
-	var as = assert.New(t)
-	var m1 = make(map[any]any)
-	var m2 = newSmap()
-	var count = 1000
+	as := assert.New(t)
+	m1 := make(map[any]any)
+	m2 := newSmap()
+	count := 1000
 	for i := 0; i < count; i++ {
-		var key = string(internal.AlphabetNumeric.Generate(10))
-		var val = internal.AlphabetNumeric.Uint32()
+		key := string(internal.AlphabetNumeric.Generate(10))
+		val := internal.AlphabetNumeric.Uint32()
 		m1[key] = val
 		m2.Store(key, val)
 	}
@@ -97,20 +97,20 @@ func TestMap_Range(t *testing.T) {
 }
 
 func TestConcurrentMap(t *testing.T) {
-	var as = assert.New(t)
-	var m1 = make(map[string]any)
-	var m2 = NewConcurrentMap[string, uint32]()
+	as := assert.New(t)
+	m1 := make(map[string]any)
+	m2 := NewConcurrentMap[string, uint32]()
 	as.Equal(m2.num, uint64(16))
-	var count = internal.AlphabetNumeric.Intn(1000)
+	count := internal.AlphabetNumeric.Intn(1000)
 	for i := 0; i < count; i++ {
-		var key = string(internal.AlphabetNumeric.Generate(10))
-		var val = internal.AlphabetNumeric.Uint32()
+		key := string(internal.AlphabetNumeric.Generate(10))
+		val := internal.AlphabetNumeric.Uint32()
 		m1[key] = val
 		m2.Store(key, val)
 	}
 
-	var keys = make([]string, 0)
-	for k, _ := range m1 {
+	keys := make([]string, 0)
+	for k := range m1 {
 		keys = append(keys, k)
 	}
 	for i := 0; i < len(keys)/2; i++ {
@@ -126,8 +126,8 @@ func TestConcurrentMap(t *testing.T) {
 	as.Equal(len(m1), m2.Len())
 
 	t.Run("", func(t *testing.T) {
-		var sum = 0
-		var cm = NewConcurrentMap[string, int](8, 8)
+		sum := 0
+		cm := NewConcurrentMap[string, int](8, 8)
 		for _, item := range cm.shardings {
 			sum += len(item.m)
 		}
@@ -136,13 +136,13 @@ func TestConcurrentMap(t *testing.T) {
 }
 
 func TestConcurrentMap_Range(t *testing.T) {
-	var as = assert.New(t)
-	var m1 = make(map[any]any)
-	var m2 = NewConcurrentMap[string, uint32](13)
-	var count = 1000
+	as := assert.New(t)
+	m1 := make(map[any]any)
+	m2 := NewConcurrentMap[string, uint32](13)
+	count := 1000
 	for i := 0; i < count; i++ {
-		var key = string(internal.AlphabetNumeric.Generate(10))
-		var val = internal.AlphabetNumeric.Uint32()
+		key := string(internal.AlphabetNumeric.Generate(10))
+		val := internal.AlphabetNumeric.Uint32()
 		m1[key] = val
 		m2.Store(key, val)
 	}
@@ -173,10 +173,10 @@ func TestConcurrentMap_Range(t *testing.T) {
 }
 
 func TestHash(t *testing.T) {
-	var h = maphash.NewHasher[string]()
+	h := maphash.NewHasher[string]()
 	for i := 0; i < 1000; i++ {
-		var a = string(internal.AlphabetNumeric.Generate(16))
-		var b = string(internal.AlphabetNumeric.Generate(16))
+		a := string(internal.AlphabetNumeric.Generate(16))
+		b := string(internal.AlphabetNumeric.Generate(16))
 		assert.Equal(t, h.Hash(a), h.Hash(a))
 		assert.NotEqual(t, h.Hash(a), h.Hash(b))
 	}

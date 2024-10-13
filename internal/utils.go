@@ -22,9 +22,9 @@ type Integer interface {
 }
 
 func MaskByByte(content []byte, key []byte) {
-	var n = len(content)
+	n := len(content)
 	for i := 0; i < n; i++ {
-		var idx = i & 3
+		idx := i & 3
 		content[i] ^= key[idx]
 	}
 }
@@ -64,17 +64,11 @@ func MethodExists(in any, method string) (reflect.Value, bool) {
 }
 
 func StringToBytes(s string) []byte {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-	return *(*[]byte)(unsafe.Pointer(&bh))
+	return *(*[]byte)(unsafe.Pointer(&s))
 }
 
 func FnvString(s string) uint64 {
-	var h = uint64(offset64)
+	h := uint64(offset64)
 	for _, b := range s {
 		h *= prime64
 		h ^= uint64(b)
@@ -83,7 +77,7 @@ func FnvString(s string) uint64 {
 }
 
 func FnvNumber[T Integer](x T) uint64 {
-	var h = uint64(offset64)
+	h := uint64(offset64)
 	h *= prime64
 	h ^= uint64(x)
 	return h
@@ -91,8 +85,8 @@ func FnvNumber[T Integer](x T) uint64 {
 
 // MaskXOR 计算掩码
 func MaskXOR(b []byte, key []byte) {
-	var maskKey = binary.LittleEndian.Uint32(key)
-	var key64 = uint64(maskKey)<<32 + uint64(maskKey)
+	maskKey := binary.LittleEndian.Uint32(key)
+	key64 := uint64(maskKey)<<32 + uint64(maskKey)
 
 	for len(b) >= 64 {
 		v := binary.LittleEndian.Uint64(b)
@@ -120,7 +114,7 @@ func MaskXOR(b []byte, key []byte) {
 		b = b[8:]
 	}
 
-	var n = len(b)
+	n := len(b)
 	for i := 0; i < n; i++ {
 		idx := i & 3
 		b[i] ^= key[idx]
@@ -152,8 +146,8 @@ func GetIntersectionElem(a, b []string) string {
 // Split 分割给定的字符串 s，使用 sep 作为分隔符。空值将会被过滤掉。
 // Splits the given string s using sep as the separator. Empty values will be filtered out.
 func Split(s string, sep string) []string {
-	var list = strings.Split(s, sep)
-	var j = 0
+	list := strings.Split(s, sep)
+	j := 0
 	for _, v := range list {
 		if v = strings.TrimSpace(v); v != "" {
 			list[j] = v
@@ -164,7 +158,7 @@ func Split(s string, sep string) []string {
 }
 
 func HttpHeaderEqual(a, b string) bool {
-	return strings.ToLower(a) == strings.ToLower(b)
+	return strings.EqualFold(a, b)
 }
 
 func HttpHeaderContains(a, b string) bool {
@@ -188,16 +182,14 @@ func ToBinaryNumber[T Integer](n T) T {
 
 // BinaryPow 返回2的n次方
 func BinaryPow(n int) int {
-	var ans = 1
+	ans := 1
 	for i := 0; i < n; i++ {
 		ans <<= 1
 	}
 	return ans
 }
 
-// BufferReset 重置buffer底层的切片
-// Reset the buffer's underlying slice
-// 注意：修改后面的属性一定要加偏移量，否则可能会导致未定义的行为。
+// BufferReset resets the buffer's underlying slice
 // Note: Be sure to add an offset when modifying the following properties, otherwise it may lead to undefined behavior.
 func BufferReset(b *bytes.Buffer, p []byte) { *(*[]byte)(unsafe.Pointer(b)) = p }
 

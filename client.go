@@ -43,7 +43,7 @@ func NewClient(handler Event, option *ClientOption) (*Conn, *http.Response, erro
 		return nil, nil, ErrUnsupportedProtocol
 	}
 
-	var tlsEnabled = URL.Scheme == "wss"
+	tlsEnabled := URL.Scheme == "wss"
 	dialer, err := option.NewDialer()
 	if err != nil {
 		return nil, nil, err
@@ -112,7 +112,7 @@ func (c *connector) request() (*http.Response, *bufio.Reader, error) {
 		r.Header.Set(internal.SecWebSocketKey.Key, c.secWebsocketKey)
 	}
 
-	var ch = make(chan error)
+	ch := make(chan error)
 
 	// 发送http请求
 	// send http request
@@ -170,8 +170,8 @@ func (c *connector) handshake() (*Conn, *http.Response, error) {
 		return nil, resp, err
 	}
 
-	var extensions = resp.Header.Get(internal.SecWebSocketExtensions.Key)
-	var pd = c.getPermessageDeflate(extensions)
+	extensions := resp.Header.Get(internal.SecWebSocketExtensions.Key)
+	pd := c.getPermessageDeflate(extensions)
 	socket := &Conn{
 		ss:                c.option.NewSession(),
 		isServer:          false,

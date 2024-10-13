@@ -40,8 +40,8 @@ func newSmap() *smap {
 // smap 基于 map 的会话存储实现
 // map-based implementation of the session storage
 type smap struct {
-	sync.Mutex
 	data map[string]any
+	sync.Mutex
 }
 
 // Len 返回存储中的键值对数量
@@ -93,17 +93,14 @@ type (
 	// ConcurrentMap 并发安全的映射结构
 	// concurrency-safe map structure
 	ConcurrentMap[K comparable, V any] struct {
-		// hasher 用于计算键的哈希值
 		// compute the hash value of keys
 		hasher maphash.Hasher[K]
 
-		// num 表示分片的数量
-		// represents the number of shardings
-		num uint64
-
-		// shardings 存储实际的分片映射
 		// stores the actual sharding maps
 		shardings []*Map[K, V]
+
+		// represents the number of shardings
+		num uint64
 	}
 )
 
@@ -115,12 +112,12 @@ func NewConcurrentMap[K comparable, V any](size ...uint64) *ConcurrentMap[K, V] 
 	size = append(size, 0, 0)
 	num, capacity := size[0], size[1]
 	num = internal.ToBinaryNumber(internal.SelectValue(num <= 0, 16, num))
-	var cm = &ConcurrentMap[K, V]{
+	cm := &ConcurrentMap[K, V]{
 		hasher:    maphash.NewHasher[K](),
 		num:       num,
 		shardings: make([]*Map[K, V], num),
 	}
-	for i, _ := range cm.shardings {
+	for i := range cm.shardings {
 		cm.shardings[i] = NewMap[K, V](int(capacity))
 	}
 	return cm
@@ -131,15 +128,15 @@ func NewConcurrentMap[K comparable, V any](size ...uint64) *ConcurrentMap[K, V] 
 // 分片中的操作是无锁的，需要手动加锁
 // The operations inside the sharding are lockless and need to be locked manually.
 func (c *ConcurrentMap[K, V]) GetSharding(key K) *Map[K, V] {
-	var hashCode = c.hasher.Hash(key)
-	var index = hashCode & (c.num - 1)
+	hashCode := c.hasher.Hash(key)
+	index := hashCode & (c.num - 1)
 	return c.shardings[index]
 }
 
 // Len 返回映射中的元素数量
 // Len returns the number of elements in the map
 func (c *ConcurrentMap[K, V]) Len() int {
-	var length = 0
+	length := 0
 	for _, b := range c.shardings {
 		b.Lock()
 		length += b.Len()
@@ -153,7 +150,7 @@ func (c *ConcurrentMap[K, V]) Len() int {
 // ok 结果表示是否在映射中找到了值
 // The ok result indicates whether the value was found in the map
 func (c *ConcurrentMap[K, V]) Load(key K) (value V, ok bool) {
-	var b = c.GetSharding(key)
+	b := c.GetSharding(key)
 	b.Lock()
 	value, ok = b.Load(key)
 	b.Unlock()
@@ -163,7 +160,7 @@ func (c *ConcurrentMap[K, V]) Load(key K) (value V, ok bool) {
 // Delete 删除键对应的值
 // Delete deletes the value for a key
 func (c *ConcurrentMap[K, V]) Delete(key K) {
-	var b = c.GetSharding(key)
+	b := c.GetSharding(key)
 	b.Lock()
 	b.Delete(key)
 	b.Unlock()
@@ -172,7 +169,7 @@ func (c *ConcurrentMap[K, V]) Delete(key K) {
 // Store 设置键对应的值
 // sets the value for a key
 func (c *ConcurrentMap[K, V]) Store(key K, value V) {
-	var b = c.GetSharding(key)
+	b := c.GetSharding(key)
 	b.Lock()
 	b.Store(key, value)
 	b.Unlock()
@@ -182,13 +179,13 @@ func (c *ConcurrentMap[K, V]) Store(key K, value V) {
 // 如果 f 返回 false，遍历停止
 // If f returns false, range stops the iteration
 func (c *ConcurrentMap[K, V]) Range(f func(key K, value V) bool) {
-	var next = true
-	var cb = func(k K, v V) bool {
+	next := true
+	cb := func(k K, v V) bool {
 		next = f(k, v)
 		return next
 	}
 	for i := uint64(0); i < c.num && next; i++ {
-		var b = c.shardings[i]
+		b := c.shardings[i]
 		b.Lock()
 		b.Range(cb)
 		b.Unlock()
@@ -198,8 +195,8 @@ func (c *ConcurrentMap[K, V]) Range(f func(key K, value V) bool) {
 // Map 线程安全的泛型映射类型.
 // thread-safe generic map type.
 type Map[K comparable, V any] struct {
-	sync.Mutex
 	m map[K]V
+	sync.Mutex
 }
 
 // NewMap 创建一个新的 Map 实例
@@ -207,7 +204,7 @@ type Map[K comparable, V any] struct {
 // size 参数用于指定初始容量，如果未提供则默认为 0
 // The size parameter is used to specify the initial capacity, defaulting to 0 if not provided.
 func NewMap[K comparable, V any](size ...int) *Map[K, V] {
-	var capacity = 0
+	capacity := 0
 	if len(size) > 0 {
 		capacity = size[0]
 	}

@@ -37,7 +37,7 @@ type Payload interface {
 type Buffers [][]byte
 
 func (b Buffers) CheckEncoding(enabled bool, opcode uint8) bool {
-	for i, _ := range b {
+	for i := range b {
 		if !CheckEncoding(enabled, opcode, b[i]) {
 			return false
 		}
@@ -46,8 +46,8 @@ func (b Buffers) CheckEncoding(enabled bool, opcode uint8) bool {
 }
 
 func (b Buffers) Len() int {
-	var sum = 0
-	for i, _ := range b {
+	sum := 0
+	for i := range b {
 		sum += len(b[i])
 	}
 	return sum
@@ -55,8 +55,8 @@ func (b Buffers) Len() int {
 
 // WriteTo 可重复写
 func (b Buffers) WriteTo(w io.Writer) (int64, error) {
-	var n = 0
-	for i, _ := range b {
+	n := 0
+	for i := range b {
 		x, err := w.Write(b[i])
 		n += x
 		if err != nil {

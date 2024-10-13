@@ -78,19 +78,19 @@ func testCloneBytes(b []byte) []byte {
 
 // 测试异步写入
 func TestConn_WriteAsync(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	// 关闭压缩
 	t.Run("plain text", func(t *testing.T) {
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{}
-		var clientOption = &ClientOption{}
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{}
+		clientOption := &ClientOption{}
 		server, client := newPeer(serverHandler, serverOption, clientHandler, clientOption)
 
 		var listA []string
 		var listB []string
-		var count = 128
+		count := 128
 		var wg sync.WaitGroup
 		wg.Add(count)
 		clientHandler.onMessage = func(socket *Conn, message *Message) {
@@ -101,8 +101,8 @@ func TestConn_WriteAsync(t *testing.T) {
 		go server.ReadLoop()
 		go client.ReadLoop()
 		for i := 0; i < count; i++ {
-			var n = internal.AlphabetNumeric.Intn(125)
-			var message = internal.AlphabetNumeric.Generate(n)
+			n := internal.AlphabetNumeric.Intn(125)
+			message := internal.AlphabetNumeric.Generate(n)
 			listA = append(listA, string(message))
 			server.WriteAsync(OpcodeText, message, nil)
 		}
@@ -112,12 +112,12 @@ func TestConn_WriteAsync(t *testing.T) {
 
 	// 开启压缩
 	t.Run("compressed text", func(t *testing.T) {
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{
 			PermessageDeflate: PermessageDeflate{Enabled: true, Threshold: 1},
 		}
-		var clientOption = &ClientOption{
+		clientOption := &ClientOption{
 			PermessageDeflate: PermessageDeflate{Enabled: true, Threshold: 1},
 		}
 		server, client := newPeer(serverHandler, serverOption, clientHandler, clientOption)
@@ -137,8 +137,8 @@ func TestConn_WriteAsync(t *testing.T) {
 		go client.ReadLoop()
 		go func() {
 			for i := 0; i < count; i++ {
-				var n = internal.AlphabetNumeric.Intn(1024)
-				var message = internal.AlphabetNumeric.Generate(n)
+				n := internal.AlphabetNumeric.Intn(1024)
+				message := internal.AlphabetNumeric.Generate(n)
 				listA = append(listA, string(message))
 				server.WriteAsync(OpcodeText, message, nil)
 			}
@@ -150,13 +150,13 @@ func TestConn_WriteAsync(t *testing.T) {
 
 	// 往关闭的连接写数据
 	t.Run("write to closed conn", func(t *testing.T) {
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{}
-		var clientOption = &ClientOption{}
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{}
+		clientOption := &ClientOption{}
 		server, client := newPeer(serverHandler, serverOption, clientHandler, clientOption)
 
-		var wg = sync.WaitGroup{}
+		wg := sync.WaitGroup{}
 		wg.Add(1)
 		serverHandler.onClose = func(socket *Conn, err error) {
 			as.Error(err)
@@ -170,13 +170,13 @@ func TestConn_WriteAsync(t *testing.T) {
 	})
 
 	t.Run("ping/pong", func(t *testing.T) {
-		var serverHandler = new(webSocketMocker)
-		var clientHandler = new(webSocketMocker)
-		var serverOption = &ServerOption{}
-		var clientOption = &ClientOption{}
+		serverHandler := new(webSocketMocker)
+		clientHandler := new(webSocketMocker)
+		serverOption := &ServerOption{}
+		clientOption := &ClientOption{}
 		server, client := newPeer(serverHandler, serverOption, clientHandler, clientOption)
 
-		var wg = sync.WaitGroup{}
+		wg := sync.WaitGroup{}
 		wg.Add(4)
 
 		serverHandler.onPing = func(socket *Conn, payload []byte) {
@@ -201,8 +201,8 @@ func TestConn_WriteAsync(t *testing.T) {
 		client.WriteString("hello")
 
 		{
-			var fh = frameHeader{}
-			var n, _ = fh.GenerateHeader(true, true, false, OpcodeText, 0)
+			fh := frameHeader{}
+			n, _ := fh.GenerateHeader(true, true, false, OpcodeText, 0)
 			go func() { client.conn.Write(fh[:n]) }()
 		}
 
@@ -212,23 +212,23 @@ func TestConn_WriteAsync(t *testing.T) {
 
 // 测试异步读
 func TestReadAsync(t *testing.T) {
-	var serverHandler = new(webSocketMocker)
-	var clientHandler = new(webSocketMocker)
-	var serverOption = &ServerOption{
+	serverHandler := new(webSocketMocker)
+	clientHandler := new(webSocketMocker)
+	serverOption := &ServerOption{
 		PermessageDeflate: PermessageDeflate{Enabled: true, Threshold: 512},
 		ParallelEnabled:   true,
 	}
-	var clientOption = &ClientOption{
+	clientOption := &ClientOption{
 		PermessageDeflate: PermessageDeflate{Enabled: true, Threshold: 512},
 		ParallelEnabled:   true,
 	}
 	server, client := newPeer(serverHandler, serverOption, clientHandler, clientOption)
 
-	var mu = &sync.Mutex{}
+	mu := &sync.Mutex{}
 	var listA []string
 	var listB []string
 	const count = 1000
-	var wg = &sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 	wg.Add(count)
 
 	clientHandler.onMessage = func(socket *Conn, message *Message) {
@@ -241,8 +241,8 @@ func TestReadAsync(t *testing.T) {
 	go server.ReadLoop()
 	go client.ReadLoop()
 	for i := 0; i < count; i++ {
-		var n = internal.AlphabetNumeric.Intn(1024)
-		var message = internal.AlphabetNumeric.Generate(n)
+		n := internal.AlphabetNumeric.Intn(1024)
+		message := internal.AlphabetNumeric.Generate(n)
 		listA = append(listA, string(message))
 		server.WriteMessage(OpcodeText, message)
 	}
@@ -252,24 +252,24 @@ func TestReadAsync(t *testing.T) {
 }
 
 func TestTaskQueue(t *testing.T) {
-	var as = assert.New(t)
+	as := assert.New(t)
 
 	t.Run("", func(t *testing.T) {
-		var mu = &sync.Mutex{}
+		mu := &sync.Mutex{}
 		var listA []int
 		var listB []int
 
-		var count = 1000
-		var wg = &sync.WaitGroup{}
+		count := 1000
+		wg := &sync.WaitGroup{}
 		wg.Add(count)
-		var q = newWorkerQueue(8)
+		q := newWorkerQueue(8)
 		for i := 0; i < count; i++ {
 			listA = append(listA, i)
 
 			v := i
 			q.Push(func() {
 				defer wg.Done()
-				var latency = time.Duration(internal.AlphabetNumeric.Intn(100)) * time.Microsecond
+				latency := time.Duration(internal.AlphabetNumeric.Intn(100)) * time.Microsecond
 				time.Sleep(latency)
 				mu.Lock()
 				listB = append(listB, v)
@@ -283,10 +283,10 @@ func TestTaskQueue(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		sum := int64(0)
 		w := newWorkerQueue(8)
-		var wg = &sync.WaitGroup{}
+		wg := &sync.WaitGroup{}
 		wg.Add(1000)
 		for i := int64(1); i <= 1000; i++ {
-			var tmp = i
+			tmp := i
 			w.Push(func() {
 				time.Sleep(time.Millisecond)
 				atomic.AddInt64(&sum, tmp)
@@ -300,10 +300,10 @@ func TestTaskQueue(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		sum := int64(0)
 		w := newWorkerQueue(1)
-		var wg = &sync.WaitGroup{}
+		wg := &sync.WaitGroup{}
 		wg.Add(1000)
 		for i := int64(1); i <= 1000; i++ {
-			var tmp = i
+			tmp := i
 			w.Push(func() {
 				time.Sleep(time.Millisecond)
 				atomic.AddInt64(&sum, tmp)
@@ -316,17 +316,17 @@ func TestTaskQueue(t *testing.T) {
 }
 
 func TestWriteAsyncBlocking(t *testing.T) {
-	var handler = new(webSocketMocker)
-	var upgrader = NewUpgrader(handler, nil)
+	handler := new(webSocketMocker)
+	upgrader := NewUpgrader(handler, nil)
 
 	allConns := map[*Conn]struct{}{}
 	for i := 0; i < 3; i++ {
 		svrConn, cliConn := net.Pipe() // no reading from another side
-		var sbrw = bufio.NewReader(svrConn)
-		var svrSocket = serveWebSocket(true, upgrader.option.getConfig(), newSmap(), svrConn, sbrw, handler, false, "", PermessageDeflate{})
+		sbrw := bufio.NewReader(svrConn)
+		svrSocket := serveWebSocket(true, upgrader.option.getConfig(), newSmap(), svrConn, sbrw, handler, false, "", PermessageDeflate{})
 		go svrSocket.ReadLoop()
-		var cbrw = bufio.NewReader(cliConn)
-		var cliSocket = serveWebSocket(false, upgrader.option.getConfig(), newSmap(), cliConn, cbrw, handler, false, "", PermessageDeflate{})
+		cbrw := bufio.NewReader(cliConn)
+		cliSocket := serveWebSocket(false, upgrader.option.getConfig(), newSmap(), cliConn, cbrw, handler, false, "", PermessageDeflate{})
 		if i == 0 { // client 0 1s后再开始读取；1s内不读取消息，则svrSocket 0在发送chan取出一个msg进行writePublic时即开始阻塞
 			time.AfterFunc(time.Second, func() {
 				cliSocket.ReadLoop()
@@ -355,10 +355,10 @@ func TestRQueue(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		const total = 1000
 		const limit = 8
-		var q = make(channel, limit)
-		var concurrency = int64(0)
-		var serial = int64(0)
-		var done = make(chan struct{})
+		q := make(channel, limit)
+		concurrency := int64(0)
+		serial := int64(0)
+		done := make(chan struct{})
 		for i := 0; i < total; i++ {
 			q.Go(nil, func(message *Message) error {
 				x := atomic.AddInt64(&concurrency, 1)
@@ -377,10 +377,10 @@ func TestRQueue(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		const total = 1000
 		const limit = 8
-		var q = newWorkerQueue(limit)
-		var concurrency = int64(0)
-		var serial = int64(0)
-		var done = make(chan struct{})
+		q := newWorkerQueue(limit)
+		concurrency := int64(0)
+		serial := int64(0)
+		done := make(chan struct{})
 		for i := 0; i < total; i++ {
 			q.Push(func() {
 				x := atomic.AddInt64(&concurrency, 1)

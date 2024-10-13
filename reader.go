@@ -30,7 +30,7 @@ func (c *Conn) readControl() error {
 
 	// RFC6455: 所有控制帧的有效载荷长度必须为 125 字节或更少，并且不能被分片。
 	// RFC6455: All control frames MUST have a payload length of 125 bytes or fewer and MUST NOT be fragmented.
-	var n = c.fh.GetLengthCode()
+	n := c.fh.GetLengthCode()
 	if n > internal.ThresholdV1 {
 		return internal.CloseProtocolError
 	}
@@ -48,7 +48,7 @@ func (c *Conn) readControl() error {
 		}
 	}
 
-	var opcode = c.fh.GetOpcode()
+	opcode := c.fh.GetOpcode()
 	switch opcode {
 	case OpcodePing:
 		c.handler.OnPing(c, payload)
@@ -59,7 +59,7 @@ func (c *Conn) readControl() error {
 	case OpcodeCloseConnection:
 		return c.emitClose(bytes.NewBuffer(payload))
 	default:
-		var err = fmt.Errorf("gws: unexpected opcode %d", opcode)
+		err := fmt.Errorf("gws: unexpected opcode %d", opcode)
 		return internal.NewError(internal.CloseProtocolError, err)
 	}
 }
@@ -93,16 +93,16 @@ func (c *Conn) readMessage() error {
 		return err
 	}
 
-	var opcode = c.fh.GetOpcode()
-	var compressed = c.pd.Enabled && c.fh.GetRSV1()
+	opcode := c.fh.GetOpcode()
+	compressed := c.pd.Enabled && c.fh.GetRSV1()
 	if !opcode.isDataFrame() {
 		return c.readControl()
 	}
 
-	var fin = c.fh.GetFIN()
-	var buf = binaryPool.Get(contentLength + len(flateTail))
-	var p = buf.Bytes()[:contentLength]
-	var closer = Message{Data: buf}
+	fin := c.fh.GetFIN()
+	buf := binaryPool.Get(contentLength + len(flateTail))
+	p := buf.Bytes()[:contentLength]
+	closer := Message{Data: buf}
 	defer closer.Close()
 
 	if err := internal.ReadN(c.br, p); err != nil {

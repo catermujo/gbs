@@ -57,7 +57,7 @@ func (c *responseWriter) WithHeader(k, v string) {
 // WithExtraHeader 添加额外的 HTTP Header
 // Adds extra http header
 func (c *responseWriter) WithExtraHeader(h http.Header) {
-	for k, _ := range h {
+	for k := range h {
 		c.WithHeader(k, h.Get(k))
 	}
 }
@@ -170,8 +170,8 @@ func (c *Upgrader) UpgradeFromConn(conn net.Conn, br *bufio.Reader, r *http.Requ
 // 向客户端写入 HTTP 错误响应
 // Writes an HTTP error response to the client
 func (c *Upgrader) writeErr(conn net.Conn, err error) error {
-	var str = err.Error()
-	var buf = binaryPool.Get(256)
+	str := err.Error()
+	buf := binaryPool.Get(256)
 	buf.WriteString("HTTP/1.1 400 Bad Request\r\n")
 	buf.WriteString("Date: " + time.Now().Format(time.RFC1123) + "\r\n")
 	buf.WriteString("Content-Length: " + strconv.Itoa(len(str)) + "\r\n")
@@ -188,7 +188,7 @@ func (c *Upgrader) writeErr(conn net.Conn, err error) error {
 func (c *Upgrader) doUpgradeFromConn(netConn net.Conn, br *bufio.Reader, r *http.Request) (*Conn, error) {
 	// 授权请求，如果授权失败，返回未授权错误
 	// Authorize the request, if authorization fails, return an unauthorized error
-	var session = c.option.NewSession()
+	session := c.option.NewSession()
 	if !c.option.Authorize(r, session) {
 		return nil, ErrUnauthorized
 	}
@@ -208,16 +208,16 @@ func (c *Upgrader) doUpgradeFromConn(netConn net.Conn, br *bufio.Reader, r *http
 		return nil, ErrHandshake
 	}
 
-	var rw = new(responseWriter).Init()
+	rw := new(responseWriter).Init()
 	defer rw.Close()
 
-	var extensions = r.Header.Get(internal.SecWebSocketExtensions.Key)
-	var pd = c.getPermessageDeflate(extensions)
+	extensions := r.Header.Get(internal.SecWebSocketExtensions.Key)
+	pd := c.getPermessageDeflate(extensions)
 	if pd.Enabled {
 		rw.WithHeader(internal.SecWebSocketExtensions.Key, pd.genResponseHeader())
 	}
 
-	var websocketKey = r.Header.Get(internal.SecWebSocketKey.Key)
+	websocketKey := r.Header.Get(internal.SecWebSocketKey.Key)
 	if websocketKey == "" {
 		return nil, ErrHandshake
 	}
@@ -282,7 +282,7 @@ type Server struct {
 // NewServer 创建一个新的 WebSocket 服务器实例
 // Creates a new WebSocket server instance
 func NewServer(eventHandler Event, option *ServerOption) *Server {
-	var c = &Server{upgrader: NewUpgrader(eventHandler, option)}
+	c := &Server{upgrader: NewUpgrader(eventHandler, option)}
 	c.option = c.upgrader.option
 	c.OnError = func(conn net.Conn, err error) { c.option.Logger.Error("gws: " + err.Error()) }
 	c.OnRequest = func(conn net.Conn, br *bufio.Reader, r *http.Request) {
