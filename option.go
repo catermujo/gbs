@@ -60,9 +60,6 @@ type (
 		// Maximum length of written message content
 		WriteMaxPayloadSize int
 
-		// Deprecated: Size of the write buffer, v1.4.5 version of this parameter is deprecated
-		WriteBufferSize int
-
 		// Limit on the number of concurrent goroutines used for parallel message processing (single connection)
 		ParallelGolimit int
 
@@ -116,9 +113,6 @@ type (
 		// Parallel goroutine limit
 		ParallelGolimit int
 
-		// Deprecated: Size of the write buffer, v1.4.5 version of this parameter is deprecated
-		WriteBufferSize int
-
 		// Whether UTF-8 check is enabled
 		CheckUtf8Enabled bool
 
@@ -155,9 +149,6 @@ func initServerOption(c *ServerOption) *ServerOption {
 	if c.WriteMaxPayloadSize <= 0 {
 		c.WriteMaxPayloadSize = defaultWriteMaxPayloadSize
 	}
-	if c.WriteBufferSize <= 0 {
-		c.WriteBufferSize = defaultWriteBufferSize
-	}
 	if c.Authorize == nil {
 		c.Authorize = func(r *http.Request, session SessionStorage) bool { return true }
 	}
@@ -185,7 +176,6 @@ func initServerOption(c *ServerOption) *ServerOption {
 		ReadMaxPayloadSize:  c.ReadMaxPayloadSize,
 		ReadBufferSize:      c.ReadBufferSize,
 		WriteMaxPayloadSize: c.WriteMaxPayloadSize,
-		WriteBufferSize:     c.WriteBufferSize,
 		CheckUtf8Enabled:    c.CheckUtf8Enabled,
 		Recovery:            c.Recovery,
 		Logger:              c.Logger,
@@ -243,9 +233,6 @@ type ClientOption struct {
 	// Parallel goroutine limit
 	ParallelGolimit int
 
-	// Deprecated: Size of the write buffer, v1.4.5 version of this parameter is deprecated
-	WriteBufferSize int
-
 	// Whether UTF-8 check is enabled
 	CheckUtf8Enabled bool
 
@@ -270,9 +257,6 @@ func initClientOption(c *ClientOption) *ClientOption {
 	}
 	if c.WriteMaxPayloadSize <= 0 {
 		c.WriteMaxPayloadSize = defaultWriteMaxPayloadSize
-	}
-	if c.WriteBufferSize <= 0 {
-		c.WriteBufferSize = defaultWriteBufferSize
 	}
 	if c.HandshakeTimeout <= 0 {
 		c.HandshakeTimeout = defaultHandshakeTimeout
@@ -304,7 +288,6 @@ func (c *ClientOption) getConfig() *Config {
 		ReadMaxPayloadSize:  c.ReadMaxPayloadSize,
 		ReadBufferSize:      c.ReadBufferSize,
 		WriteMaxPayloadSize: c.WriteMaxPayloadSize,
-		WriteBufferSize:     c.WriteBufferSize,
 		CheckUtf8Enabled:    c.CheckUtf8Enabled,
 		Recovery:            c.Recovery,
 		Logger:              c.Logger,

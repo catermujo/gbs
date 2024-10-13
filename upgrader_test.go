@@ -103,8 +103,7 @@ func TestNoDelay(t *testing.T) {
 
 func TestAccept(t *testing.T) {
 	upgrader := NewUpgrader(new(webSocketMocker), &ServerOption{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+		ReadBufferSize: 1024,
 		ResponseHeader: http.Header{
 			"Server": []string{"gws"},
 		},
