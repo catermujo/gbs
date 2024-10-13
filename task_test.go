@@ -20,9 +20,7 @@ func serveWebSocket(
 	netConn net.Conn,
 	br *bufio.Reader,
 	handler Event,
-	compressEnabled bool,
 	subprotocol string,
-	pd PermessageDeflate,
 ) *Conn {
 	socket := &Conn{
 		isServer:    isServer,
@@ -36,20 +34,6 @@ func serveWebSocket(
 		subprotocol: subprotocol,
 		writeQueue:  workerQueue{maxConcurrency: 1},
 		readQueue:   make(channel, 8),
-		pd:          pd,
-	}
-	if compressEnabled {
-		if isServer {
-			socket.deflater = new(deflaterPool).initialize(pd, config.ReadMaxPayloadSize).Select()
-			if pd.ServerContextTakeover {
-				socket.cpsWindow.initialize(config.cswPool, pd.ServerMaxWindowBits)
-			}
-			if pd.ClientContextTakeover {
-				socket.dpsWindow.initialize(config.dswPool, pd.ClientMaxWindowBits)
-			}
-		} else {
-			socket.deflater = new(deflater).initialize(false, pd, config.ReadMaxPayloadSize)
-		}
 	}
 	return socket
 }
@@ -61,11 +45,11 @@ func newPeer(serverHandler Event, serverOption *ServerOption, clientHandler Even
 	s, c := net.Pipe()
 	{
 		br := bufio.NewReaderSize(s, size)
-		server = serveWebSocket(true, serverOption.getConfig(), newSmap(), s, br, serverHandler, serverOption.PermessageDeflate.Enabled, "", serverOption.PermessageDeflate)
+		server = serveWebSocket(true, serverOption.getConfig(), newSmap(), s, br, serverHandler, "")
 	}
 	{
 		br := bufio.NewReaderSize(c, size)
-		client = serveWebSocket(false, clientOption.getConfig(), newSmap(), c, br, clientHandler, clientOption.PermessageDeflate.Enabled, "", clientOption.PermessageDeflate)
+		client = serveWebSocket(false, clientOption.getConfig(), newSmap(), c, br, clientHandler, "")
 	}
 	return
 }
@@ -106,44 +90,6 @@ func TestConn_WriteAsync(t *testing.T) {
 			listA = append(listA, string(message))
 			server.WriteAsync(OpcodeText, message, nil)
 		}
-		wg.Wait()
-		as.ElementsMatch(listA, listB)
-	})
-
-	// 开启压缩
-	t.Run("compressed text", func(t *testing.T) {
-		serverHandler := new(webSocketMocker)
-		clientHandler := new(webSocketMocker)
-		serverOption := &ServerOption{
-			PermessageDeflate: PermessageDeflate{Enabled: true, Threshold: 1},
-		}
-		clientOption := &ClientOption{
-			PermessageDeflate: PermessageDeflate{Enabled: true, Threshold: 1},
-		}
-		server, client := newPeer(serverHandler, serverOption, clientHandler, clientOption)
-
-		var listA []string
-		var listB []string
-		const count = 128
-		var wg sync.WaitGroup
-		wg.Add(count)
-
-		clientHandler.onMessage = func(socket *Conn, message *Message) {
-			listB = append(listB, message.Data.String())
-			wg.Done()
-		}
-
-		go server.ReadLoop()
-		go client.ReadLoop()
-		go func() {
-			for i := 0; i < count; i++ {
-				n := internal.AlphabetNumeric.Intn(1024)
-				message := internal.AlphabetNumeric.Generate(n)
-				listA = append(listA, string(message))
-				server.WriteAsync(OpcodeText, message, nil)
-			}
-		}()
-
 		wg.Wait()
 		as.ElementsMatch(listA, listB)
 	})
@@ -202,7 +148,7 @@ func TestConn_WriteAsync(t *testing.T) {
 
 		{
 			fh := frameHeader{}
-			n, _ := fh.GenerateHeader(true, true, false, OpcodeText, 0)
+			n, _ := fh.GenerateHeader(true, true, OpcodeText, 0)
 			go func() { client.conn.Write(fh[:n]) }()
 		}
 
@@ -215,12 +161,10 @@ func TestReadAsync(t *testing.T) {
 	serverHandler := new(webSocketMocker)
 	clientHandler := new(webSocketMocker)
 	serverOption := &ServerOption{
-		PermessageDeflate: PermessageDeflate{Enabled: true, Threshold: 512},
-		ParallelEnabled:   true,
+		ParallelEnabled: true,
 	}
 	clientOption := &ClientOption{
-		PermessageDeflate: PermessageDeflate{Enabled: true, Threshold: 512},
-		ParallelEnabled:   true,
+		ParallelEnabled: true,
 	}
 	server, client := newPeer(serverHandler, serverOption, clientHandler, clientOption)
 
@@ -323,10 +267,10 @@ func TestWriteAsyncBlocking(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		svrConn, cliConn := net.Pipe() // no reading from another side
 		sbrw := bufio.NewReader(svrConn)
-		svrSocket := serveWebSocket(true, upgrader.option.getConfig(), newSmap(), svrConn, sbrw, handler, false, "", PermessageDeflate{})
+		svrSocket := serveWebSocket(true, upgrader.option.getConfig(), newSmap(), svrConn, sbrw, handler, "")
 		go svrSocket.ReadLoop()
 		cbrw := bufio.NewReader(cliConn)
-		cliSocket := serveWebSocket(false, upgrader.option.getConfig(), newSmap(), cliConn, cbrw, handler, false, "", PermessageDeflate{})
+		cliSocket := serveWebSocket(false, upgrader.option.getConfig(), newSmap(), cliConn, cbrw, handler, "")
 		if i == 0 { // client 0 1s后再开始读取；1s内不读取消息，则svrSocket 0在发送chan取出一个msg进行writePublic时即开始阻塞
 			time.AfterFunc(time.Second, func() {
 				cliSocket.ReadLoop()

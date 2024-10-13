@@ -59,10 +59,6 @@ var (
 	// Handshake error, request header does not pass checksum.
 	ErrHandshake = errors.New("handshake error")
 
-	// ErrCompressionNegotiation 压缩拓展协商失败, 请尝试关闭压缩
-	// Compression extension negotiation failed, please try to disable compression.
-	ErrCompressionNegotiation = errors.New("invalid compression negotiation")
-
 	// ErrSubprotocolNegotiation 子协议协商失败
 	// Sub-protocol negotiation failed
 	ErrSubprotocolNegotiation = errors.New("sub-protocol negotiation failed")
@@ -199,14 +195,11 @@ func (c *frameHeader) SetMaskKey(offset int, key [4]byte) {
 // Generates a frame header
 // 可以考虑每个客户端连接带一个随机数发生器
 // Consider having a random number generator for each client connection
-func (c *frameHeader) GenerateHeader(isServer bool, fin bool, compress bool, opcode Opcode, length int) (headerLength int, maskBytes []byte) {
+func (c *frameHeader) GenerateHeader(isServer bool, fin bool, opcode Opcode, length int) (headerLength int, maskBytes []byte) {
 	headerLength = 2
 	b0 := uint8(opcode)
 	if fin {
 		b0 += 128
-	}
-	if compress {
-		b0 += 64
 	}
 	(*c)[0] = b0
 	headerLength += c.SetLength(uint64(length))
@@ -268,9 +261,6 @@ type Message struct {
 
 	// opcode of the message
 	Opcode Opcode
-
-	// if the message is compressed
-	compressed bool
 }
 
 // Read 从消息中读取数据到给定的字节切片 p 中
@@ -302,16 +292,12 @@ type continuationFrame struct {
 
 	// Indicates if the frame is initialized
 	initialized bool
-
-	// Indicates if the frame is compressed
-	compressed bool
 }
 
 // 重置延续帧的状态
 // Resets the state of the continuation frame
 func (c *continuationFrame) reset() {
 	c.initialized = false
-	c.compressed = false
 	c.opcode = 0
 	c.buffer = nil
 }

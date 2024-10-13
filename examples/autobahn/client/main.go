@@ -22,16 +22,11 @@ func main() {
 }
 
 func testCase(sync bool, id int, agent string) {
-	var url = fmt.Sprintf("ws://%s/runCase?case=%d&agent=%s", remoteAddr, id, agent)
-	var handler = &WebSocket{Sync: sync, onexit: make(chan struct{})}
+	url := fmt.Sprintf("ws://%s/runCase?case=%d&agent=%s", remoteAddr, id, agent)
+	handler := &WebSocket{Sync: sync, onexit: make(chan struct{})}
 	socket, _, err := gws.NewClient(handler, &gws.ClientOption{
 		Addr:             url,
 		CheckUtf8Enabled: true,
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		},
 	})
 	if err != nil {
 		log.Println(err.Error())
@@ -42,8 +37,8 @@ func testCase(sync bool, id int, agent string) {
 }
 
 type WebSocket struct {
-	Sync   bool
 	onexit chan struct{}
+	Sync   bool
 }
 
 func (c *WebSocket) OnOpen(socket *gws.Conn) {
@@ -70,8 +65,8 @@ func (c *WebSocket) OnMessage(socket *gws.Conn, message *gws.Message) {
 }
 
 type updateReportsHandler struct {
-	onexit chan struct{}
 	gws.BuiltinEventHandler
+	onexit chan struct{}
 }
 
 func (c *updateReportsHandler) OnOpen(socket *gws.Conn) {
@@ -83,16 +78,11 @@ func (c *updateReportsHandler) OnClose(socket *gws.Conn, err error) {
 }
 
 func updateReports() {
-	var url = fmt.Sprintf("ws://%s/updateReports?agent=gws/client", remoteAddr)
-	var handler = &updateReportsHandler{onexit: make(chan struct{})}
+	url := fmt.Sprintf("ws://%s/updateReports?agent=gws/client", remoteAddr)
+	handler := &updateReportsHandler{onexit: make(chan struct{})}
 	socket, _, err := gws.NewClient(handler, &gws.ClientOption{
 		Addr:             url,
 		CheckUtf8Enabled: true,
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		},
 	})
 	if err != nil {
 		log.Println(err.Error())

@@ -23,21 +23,15 @@ type Conn struct {
 	handler   Event
 	readQueue channel
 	config    *Config
-	deflater  *deflater
 	// br Buffered reader
 	br                *bufio.Reader
 	subprotocol       string
 	continuationFrame continuationFrame
-	// Compressed dictionary sliding window
-	cpsWindow slideWindow
-	// Decompressing dictionary sliding window
-	dpsWindow  slideWindow
-	writeQueue workerQueue
-	pd         PermessageDeflate
-	mu         sync.Mutex
-	closed     uint32
-	fh         frameHeader
-	isServer   bool
+	writeQueue        workerQueue
+	mu                sync.Mutex
+	closed            uint32
+	fh                frameHeader
+	isServer          bool
 }
 
 // ReadLoop
@@ -65,14 +59,6 @@ func (c *Conn) ReadLoop() {
 		c.br.Reset(nil)
 		c.config.brPool.Put(c.br)
 		c.br = nil
-		if c.cpsWindow.enabled {
-			c.config.cswPool.Put(c.cpsWindow.dict)
-			c.cpsWindow.dict = nil
-		}
-		if c.dpsWindow.enabled {
-			c.config.dswPool.Put(c.dpsWindow.dict)
-			c.dpsWindow.dict = nil
-		}
 	}
 }
 

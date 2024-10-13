@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/klauspost/compress/flate"
 	"github.com/lxzan/gws/internal"
 )
 
@@ -16,10 +15,6 @@ const (
 	// Default parallel goroutine limit
 	defaultParallelGolimit = 8
 
-	// 默认的压缩级别
-	// Default compression level
-	defaultCompressLevel = flate.BestSpeed
-
 	// 默认的读取最大负载大小
 	// Default maximum payload size for reading
 	defaultReadMaxPayloadSize = 16 * 1024 * 1024
@@ -27,14 +22,6 @@ const (
 	// 默认的写入最大负载大小
 	// Default maximum payload size for writing
 	defaultWriteMaxPayloadSize = 16 * 1024 * 1024
-
-	// 默认的压缩阈值
-	// Default compression threshold
-	defaultCompressThreshold = 512
-
-	// 默认的压缩器池大小
-	// Default compressor pool size
-	defaultCompressorPoolSize = 32
 
 	// 默认的读取缓冲区大小
 	// Default read buffer size
@@ -54,55 +41,12 @@ const (
 )
 
 type (
-	// PermessageDeflate 压缩拓展配置
-	// 对于gws client, 建议开启上下文接管, 不修改滑动窗口指数, 提供最好的兼容性.
-	// 对于gws server, 如果开启上下文接管, 每个连接会占用更多内存, 合理配置滑动窗口指数.
-	// For gws client, it is recommended to enable contextual takeover and not modify the sliding window index to provide the best compatibility.
-	// For gws server, if you turn on context-side takeover, each connection takes up more memory, configure the sliding window index appropriately.
-	PermessageDeflate struct {
-		// Compress level
-		Level int
-
-		// Compression threshold, messages below the threshold will not be compressed, only for context-free takeover mode.
-		Threshold int
-
-		// Compressor memory pool size
-		// The higher the value the lower the probability of competition, but it will consume a lot of memory
-		PoolSize int
-
-		// The server-side sliding window index
-		// Range 8<=n<=15, means pow(2,n) bytes.
-		ServerMaxWindowBits int
-
-		// The client-side sliding window index
-		// Range 8<=n<=15, means pow(2,n) bytes.
-		ClientMaxWindowBits int
-
-		// Whether to turn on compression
-		Enabled bool
-
-		// Server side context takeover
-		ServerContextTakeover bool
-
-		// Client side context takeover
-		ClientContextTakeover bool
-	}
-
 	Config struct {
 		// Logging tools
 		Logger Logger
 
 		// Memory pool for bufio.Reader
 		brPool *internal.Pool[*bufio.Reader]
-
-		// Big File Compressor
-		bdPool *internal.Pool[*bigDeflater]
-
-		// Memory pool for compressor sliding window
-		cswPool *internal.Pool[[]byte]
-
-		// Memory pool for decompressor sliding window
-		dswPool *internal.Pool[[]byte]
 
 		// Message callback (OnMessage) recovery program
 		Recovery func(logger Logger)
@@ -157,9 +101,6 @@ type (
 		// WebSocket sub-protocol, handshake failure disconnects the connection
 		SubProtocols []string
 
-		// PermessageDeflate configuration
-		PermessageDeflate PermessageDeflate
-
 		// Handshake timeout duration
 		HandshakeTimeout time.Duration
 
@@ -185,16 +126,6 @@ type (
 		ParallelEnabled bool
 	}
 )
-
-// 设置压缩阈值
-// 开启上下文接管时, 必须不论长短压缩全部消息, 否则浏览器会报错
-// When context takeover is enabled, all messages must be compressed regardless of length,
-// otherwise the browser will report an error.
-func (c *PermessageDeflate) setThreshold(isServer bool) {
-	if (isServer && c.ServerContextTakeover) || (!isServer && c.ClientContextTakeover) {
-		c.Threshold = 0
-	}
-}
 
 // 删除受保护的 WebSocket 头部字段
 // Removes protected WebSocket header fields
@@ -246,25 +177,6 @@ func initServerOption(c *ServerOption) *ServerOption {
 		c.Recovery = func(logger Logger) {}
 	}
 
-	if c.PermessageDeflate.Enabled {
-		if c.PermessageDeflate.ServerMaxWindowBits < 8 || c.PermessageDeflate.ServerMaxWindowBits > 15 {
-			c.PermessageDeflate.ServerMaxWindowBits = internal.SelectValue(c.PermessageDeflate.ServerContextTakeover, 12, 15)
-		}
-		if c.PermessageDeflate.ClientMaxWindowBits < 8 || c.PermessageDeflate.ClientMaxWindowBits > 15 {
-			c.PermessageDeflate.ClientMaxWindowBits = internal.SelectValue(c.PermessageDeflate.ClientContextTakeover, 12, 15)
-		}
-		if c.PermessageDeflate.Threshold <= 0 {
-			c.PermessageDeflate.Threshold = defaultCompressThreshold
-		}
-		if c.PermessageDeflate.Level == 0 {
-			c.PermessageDeflate.Level = defaultCompressLevel
-		}
-		if c.PermessageDeflate.PoolSize <= 0 {
-			c.PermessageDeflate.PoolSize = defaultCompressorPoolSize
-		}
-		c.PermessageDeflate.PoolSize = internal.ToBinaryNumber(c.PermessageDeflate.PoolSize)
-	}
-
 	c.deleteProtectedHeaders()
 
 	c.config = &Config{
@@ -280,24 +192,6 @@ func initServerOption(c *ServerOption) *ServerOption {
 		brPool: internal.NewPool(func() *bufio.Reader {
 			return bufio.NewReaderSize(nil, c.ReadBufferSize)
 		}),
-	}
-
-	if c.PermessageDeflate.Enabled {
-		c.config.bdPool = internal.NewPool(func() *bigDeflater {
-			return newBigDeflater(true, c.PermessageDeflate)
-		})
-		if c.PermessageDeflate.ServerContextTakeover {
-			windowSize := internal.BinaryPow(c.PermessageDeflate.ServerMaxWindowBits)
-			c.config.cswPool = internal.NewPool(func() []byte {
-				return make([]byte, 0, windowSize)
-			})
-		}
-		if c.PermessageDeflate.ClientContextTakeover {
-			windowSize := internal.BinaryPow(c.PermessageDeflate.ClientMaxWindowBits)
-			c.config.dswPool = internal.NewPool(func() []byte {
-				return make([]byte, 0, windowSize)
-			})
-		}
 	}
 
 	return c
@@ -333,9 +227,6 @@ type ClientOption struct {
 
 	// Server address, e.g., wss://example.com/connect
 	Addr string
-
-	// PermessageDeflate configuration
-	PermessageDeflate PermessageDeflate
 
 	// Maximum payload size for reading
 	ReadMaxPayloadSize int
@@ -400,21 +291,6 @@ func initClientOption(c *ClientOption) *ClientOption {
 	}
 	if c.Recovery == nil {
 		c.Recovery = func(logger Logger) {}
-	}
-	if c.PermessageDeflate.Enabled {
-		if c.PermessageDeflate.ServerMaxWindowBits < 8 || c.PermessageDeflate.ServerMaxWindowBits > 15 {
-			c.PermessageDeflate.ServerMaxWindowBits = 15
-		}
-		if c.PermessageDeflate.ClientMaxWindowBits < 8 || c.PermessageDeflate.ClientMaxWindowBits > 15 {
-			c.PermessageDeflate.ClientMaxWindowBits = 15
-		}
-		if c.PermessageDeflate.Threshold <= 0 {
-			c.PermessageDeflate.Threshold = defaultCompressThreshold
-		}
-		if c.PermessageDeflate.Level == 0 {
-			c.PermessageDeflate.Level = defaultCompressLevel
-		}
-		c.PermessageDeflate.PoolSize = 1
 	}
 	return c
 }

@@ -1,7 +1,6 @@
 package gws
 
 import (
-	"compress/flate"
 	"net/http"
 	"testing"
 	"time"
@@ -54,8 +53,6 @@ func TestDefaultUpgrader(t *testing.T) {
 		},
 	})
 	config := updrader.option.getConfig()
-	as.Nil(config.cswPool)
-	as.Nil(config.dswPool)
 	as.Equal(false, config.ParallelEnabled)
 	as.Equal(false, config.CheckUtf8Enabled)
 	as.Equal(defaultParallelGolimit, config.ParallelGolimit)
@@ -71,57 +68,7 @@ func TestDefaultUpgrader(t *testing.T) {
 	as.Nil(updrader.option.SubProtocols)
 	as.Equal("", updrader.option.ResponseHeader.Get("Sec-Websocket-Extensions"))
 	as.Equal("gws", updrader.option.ResponseHeader.Get("X-Server"))
-	as.Equal(updrader.option.PermessageDeflate.ServerMaxWindowBits, 0)
-	as.Equal(updrader.option.PermessageDeflate.ClientMaxWindowBits, 0)
 	validateServerOption(as, updrader)
-}
-
-func TestCompressServerOption(t *testing.T) {
-	as := assert.New(t)
-
-	t.Run("", func(t *testing.T) {
-		updrader := NewUpgrader(new(BuiltinEventHandler), &ServerOption{
-			PermessageDeflate: PermessageDeflate{
-				Enabled:               true,
-				PoolSize:              60,
-				ServerContextTakeover: false,
-				ClientContextTakeover: false,
-			},
-		})
-		as.Equal(true, updrader.option.PermessageDeflate.Enabled)
-		as.Equal(defaultCompressLevel, updrader.option.PermessageDeflate.Level)
-		as.Equal(defaultCompressThreshold, updrader.option.PermessageDeflate.Threshold)
-		as.Equal(64, updrader.option.PermessageDeflate.PoolSize)
-		as.Equal(updrader.option.PermessageDeflate.ServerMaxWindowBits, 15)
-		as.Equal(updrader.option.PermessageDeflate.ClientMaxWindowBits, 15)
-		validateServerOption(as, updrader)
-	})
-
-	t.Run("", func(t *testing.T) {
-		updrader := NewUpgrader(new(BuiltinEventHandler), &ServerOption{
-			PermessageDeflate: PermessageDeflate{
-				Enabled:               true,
-				ServerContextTakeover: true,
-				ClientContextTakeover: true,
-				ServerMaxWindowBits:   10,
-				ClientMaxWindowBits:   12,
-				Level:                 flate.BestCompression,
-				Threshold:             1024,
-			},
-		})
-		as.Equal(updrader.option.PermessageDeflate.ServerMaxWindowBits, 10)
-		as.Equal(updrader.option.PermessageDeflate.ClientMaxWindowBits, 12)
-		as.Equal(true, updrader.option.PermessageDeflate.Enabled)
-		as.Equal(flate.BestCompression, updrader.option.PermessageDeflate.Level)
-		as.Equal(1024, updrader.option.PermessageDeflate.Threshold)
-		as.Equal(defaultCompressorPoolSize, updrader.option.PermessageDeflate.PoolSize)
-		validateServerOption(as, updrader)
-
-		as.Equal(cap(updrader.option.config.cswPool.Get()), 1024)
-		as.Equal(cap(updrader.option.config.dswPool.Get()), 4*1024)
-		as.Equal(len(updrader.option.config.cswPool.Get()), 0)
-		as.Equal(len(updrader.option.config.dswPool.Get()), 0)
-	})
 }
 
 func TestReadServerOption(t *testing.T) {
@@ -147,8 +94,6 @@ func TestDefaultClientOption(t *testing.T) {
 
 	config := option.getConfig()
 	as.Nil(config.brPool)
-	as.Nil(config.cswPool)
-	as.Nil(config.dswPool)
 	as.Equal(false, config.ParallelEnabled)
 	as.Equal(false, config.CheckUtf8Enabled)
 	as.Equal(defaultParallelGolimit, config.ParallelGolimit)
@@ -158,43 +103,6 @@ func TestDefaultClientOption(t *testing.T) {
 	as.Equal(0, len(option.RequestHeader))
 	as.NotNil(option.NewSession)
 	validateClientOption(as, option)
-}
-
-func TestCompressClientOption(t *testing.T) {
-	as := assert.New(t)
-
-	t.Run("", func(t *testing.T) {
-		option := &ClientOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
-		NewClient(new(BuiltinEventHandler), option)
-		as.Equal(true, option.PermessageDeflate.Enabled)
-		as.Equal(defaultCompressLevel, option.PermessageDeflate.Level)
-		as.Equal(defaultCompressThreshold, option.PermessageDeflate.Threshold)
-		as.Equal(option.PermessageDeflate.ServerMaxWindowBits, 15)
-		as.Equal(option.PermessageDeflate.ClientMaxWindowBits, 15)
-		validateClientOption(as, option)
-	})
-
-	t.Run("", func(t *testing.T) {
-		option := &ClientOption{
-			PermessageDeflate: PermessageDeflate{
-				Enabled:               true,
-				ServerContextTakeover: true,
-				ClientContextTakeover: true,
-				Level:                 flate.BestCompression,
-				Threshold:             1024,
-			},
-		}
-		initClientOption(option)
-
-		as.Equal(true, option.PermessageDeflate.Enabled)
-		as.Equal(flate.BestCompression, option.PermessageDeflate.Level)
-		as.Equal(1024, option.PermessageDeflate.Threshold)
-		validateClientOption(as, option)
-
-		cfg := option.getConfig()
-		as.Nil(cfg.cswPool)
-		as.Nil(cfg.dswPool)
-	})
 }
 
 func TestNewSession(t *testing.T) {

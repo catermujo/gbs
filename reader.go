@@ -84,7 +84,7 @@ func (c *Conn) readMessage() error {
 	// MUST be 0 unless an extension is negotiated that defines meanings for non-zero values.
 	// If a nonzero value is received and none of the negotiated extensions defines the meaning of such a nonzero value,
 	// the receiving endpoint MUST _Fail the WebSocket Connection_.
-	if !c.pd.Enabled && (c.fh.GetRSV1() || c.fh.GetRSV2() || c.fh.GetRSV3()) {
+	if c.fh.GetRSV1() || c.fh.GetRSV2() || c.fh.GetRSV3() {
 		return internal.CloseProtocolError
 	}
 
@@ -94,13 +94,12 @@ func (c *Conn) readMessage() error {
 	}
 
 	opcode := c.fh.GetOpcode()
-	compressed := c.pd.Enabled && c.fh.GetRSV1()
 	if !opcode.isDataFrame() {
 		return c.readControl()
 	}
 
 	fin := c.fh.GetFIN()
-	buf := binaryPool.Get(contentLength + len(flateTail))
+	buf := binaryPool.Get(contentLength)
 	p := buf.Bytes()[:contentLength]
 	closer := Message{Data: buf}
 	defer closer.Close()
@@ -118,17 +117,14 @@ func (c *Conn) readMessage() error {
 
 	if fin && opcode != OpcodeContinuation {
 		*(*[]byte)(unsafe.Pointer(buf)) = p
-		if !compressed {
-			closer.Data = nil
-		}
-		return c.emitMessage(&Message{Opcode: opcode, Data: buf, compressed: compressed})
+		closer.Data = nil
+		return c.emitMessage(&Message{Opcode: opcode, Data: buf})
 	}
 
 	// 处理分片消息
 	// processing segmented messages
 	if !fin && opcode != OpcodeContinuation {
 		c.continuationFrame.initialized = true
-		c.continuationFrame.compressed = compressed
 		c.continuationFrame.opcode = opcode
 		c.continuationFrame.buffer = bytes.NewBuffer(make([]byte, 0, contentLength))
 	}
@@ -144,7 +140,7 @@ func (c *Conn) readMessage() error {
 		return nil
 	}
 
-	msg := &Message{Opcode: c.continuationFrame.opcode, Data: c.continuationFrame.buffer, compressed: c.continuationFrame.compressed}
+	msg := &Message{Opcode: c.continuationFrame.opcode, Data: c.continuationFrame.buffer}
 	c.continuationFrame.reset()
 	return c.emitMessage(msg)
 }
@@ -160,13 +156,6 @@ func (c *Conn) dispatch(msg *Message) error {
 // 发射消息事件
 // Emit onmessage event
 func (c *Conn) emitMessage(msg *Message) (err error) {
-	if msg.compressed {
-		msg.Data, err = c.deflater.Decompress(msg.Data, c.dpsWindow.dict)
-		if err != nil {
-			return internal.NewError(internal.CloseInternalErr, err)
-		}
-		_, _ = c.dpsWindow.Write(msg.Bytes())
-	}
 	if !internal.CheckEncoding(c.config.CheckUtf8Enabled, uint8(msg.Opcode), msg.Bytes()) {
 		return internal.NewError(internal.CloseUnsupportedData, ErrTextEncoding)
 	}

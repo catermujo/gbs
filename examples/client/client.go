@@ -11,20 +11,15 @@ import (
 func main() {
 	socket, _, err := gws.NewClient(new(WebSocket), &gws.ClientOption{
 		Addr: "ws://127.0.0.1:3000/connect",
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		},
 	})
 	if err != nil {
-		log.Printf(err.Error())
+		log.Print(err.Error())
 		return
 	}
 	go socket.ReadLoop()
 
 	for {
-		var text = ""
+		text := ""
 		fmt.Scanf("%s", &text)
 		if strings.TrimSpace(text) == "" {
 			continue
@@ -33,8 +28,7 @@ func main() {
 	}
 }
 
-type WebSocket struct {
-}
+type WebSocket struct{}
 
 func (c *WebSocket) OnClose(socket *gws.Conn, err error) {
 	fmt.Printf("onerror: err=%s\n", err.Error())

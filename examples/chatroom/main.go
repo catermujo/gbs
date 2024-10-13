@@ -19,19 +19,13 @@ const (
 var html []byte
 
 func main() {
-	var handler = NewWebSocket()
-	var upgrader = gws.NewUpgrader(handler, &gws.ServerOption{
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		},
-
+	handler := NewWebSocket()
+	upgrader := gws.NewUpgrader(handler, &gws.ServerOption{
 		// 在querystring里面传入用户名
 		// 把Sec-WebSocket-Key作为连接的key
 		// 刷新页面的时候, 会触发上一个连接的OnClose/OnError事件, 这时候需要对比key并删除map里存储的连接
 		Authorize: func(r *http.Request, session gws.SessionStorage) bool {
-			var name = r.URL.Query().Get("name")
+			name := r.URL.Query().Get("name")
 			if name == "" {
 				return false
 			}
@@ -123,7 +117,7 @@ func (c *WebSocket) OnMessage(socket *gws.Conn, message *gws.Message) {
 		return
 	}
 
-	var input = &Input{}
+	input := &Input{}
 	_ = json.Unmarshal(message.Bytes(), input)
 	if conn, ok := c.sessions.Load(input.To); ok {
 		_ = conn.WriteMessage(gws.OpcodeText, message.Bytes())

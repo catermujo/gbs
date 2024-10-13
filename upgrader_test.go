@@ -103,16 +103,14 @@ func TestNoDelay(t *testing.T) {
 
 func TestAccept(t *testing.T) {
 	upgrader := NewUpgrader(new(webSocketMocker), &ServerOption{
-		PermessageDeflate: PermessageDeflate{Enabled: true},
-		ReadBufferSize:    1024,
-		WriteBufferSize:   1024,
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
 		ResponseHeader: http.Header{
 			"Server": []string{"gws"},
 		},
 	})
 
 	t.Run("ok", func(t *testing.T) {
-		upgrader.option.PermessageDeflate.Enabled = true
 		upgrader.option.SubProtocols = []string{"chat"}
 		request := &http.Request{
 			Header: http.Header{},
@@ -188,7 +186,6 @@ func TestAccept(t *testing.T) {
 	})
 
 	t.Run("fail check origin", func(t *testing.T) {
-		upgrader.option.PermessageDeflate.Enabled = true
 		upgrader.option.Authorize = func(r *http.Request, session SessionStorage) bool {
 			return false
 		}
@@ -231,23 +228,12 @@ func TestNewServer(t *testing.T) {
 
 	t.Run("ok 1", func(t *testing.T) {
 		addr := ":" + nextPort()
-		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-			ServerMaxWindowBits:   10,
-			ClientMaxWindowBits:   10,
-		}})
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{})
 		go server.Run(addr)
 
 		time.Sleep(100 * time.Millisecond)
 		client, _, err := NewClient(new(BuiltinEventHandler), &ClientOption{
 			Addr: "ws://localhost" + addr,
-			PermessageDeflate: PermessageDeflate{
-				Enabled:               true,
-				ServerContextTakeover: true,
-				ClientContextTakeover: true,
-			},
 		})
 		as.NoError(err)
 		client.WriteMessage(OpcodeText, internal.AlphabetNumeric.Generate(300*1024))
@@ -256,49 +242,24 @@ func TestNewServer(t *testing.T) {
 
 	t.Run("ok 2", func(t *testing.T) {
 		addr := ":" + nextPort()
-		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-			ServerMaxWindowBits:   10,
-			ClientMaxWindowBits:   10,
-		}})
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{})
 		go server.Run(addr)
 
 		time.Sleep(100 * time.Millisecond)
 		_, _, err := NewClient(new(BuiltinEventHandler), &ClientOption{
 			Addr: "ws://localhost" + addr,
-			PermessageDeflate: PermessageDeflate{
-				Enabled:               true,
-				ServerContextTakeover: true,
-				ClientContextTakeover: true,
-				ClientMaxWindowBits:   10,
-			},
 		})
 		as.NoError(err)
 	})
 
 	t.Run("ok 3", func(t *testing.T) {
 		addr := ":" + nextPort()
-		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-			ServerMaxWindowBits:   10,
-			ClientMaxWindowBits:   10,
-		}})
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{})
 		go server.Run(addr)
 
 		time.Sleep(100 * time.Millisecond)
 		client, _, err := NewClient(new(BuiltinEventHandler), &ClientOption{
 			Addr: "ws://localhost" + addr,
-			PermessageDeflate: PermessageDeflate{
-				Enabled:               true,
-				ServerContextTakeover: true,
-				ClientContextTakeover: true,
-				ServerMaxWindowBits:   10,
-				ClientMaxWindowBits:   10,
-			},
 		})
 		as.NoError(err)
 		client.WriteMessage(OpcodeText, internal.AlphabetNumeric.Generate(300*1024))
@@ -307,11 +268,7 @@ func TestNewServer(t *testing.T) {
 
 	t.Run("tls", func(t *testing.T) {
 		addr := ":" + nextPort()
-		server := NewServer(new(BuiltinEventHandler), &ServerOption{PermessageDeflate: PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		}})
+		server := NewServer(new(BuiltinEventHandler), &ServerOption{})
 		dir := os.Getenv("PWD")
 		go server.RunTLS(addr, dir+"/examples/wss/cert/server.crt", dir+"/examples/wss/cert/server.pem")
 		ctx, _ := context.WithTimeout(context.Background(), time.Second)

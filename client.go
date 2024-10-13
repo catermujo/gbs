@@ -101,9 +101,6 @@ func (c *connector) request() (*http.Response, *bufio.Reader, error) {
 	r.Header.Set(internal.Connection.Key, internal.Connection.Val)
 	r.Header.Set(internal.Upgrade.Key, internal.Upgrade.Val)
 	r.Header.Set(internal.SecWebSocketVersion.Key, internal.SecWebSocketVersion.Val)
-	if c.option.PermessageDeflate.Enabled {
-		r.Header.Set(internal.SecWebSocketExtensions.Key, c.option.PermessageDeflate.genRequestHeader())
-	}
 	if c.secWebsocketKey == "" {
 		var key [16]byte
 		binary.BigEndian.PutUint64(key[0:8], internal.AlphabetNumeric.Uint64())
@@ -136,25 +133,6 @@ func (c *connector) request() (*http.Response, *bufio.Reader, error) {
 	return resp, br, err
 }
 
-// 获取压缩拓展结果
-// Get compression expansion results
-func (c *connector) getPermessageDeflate(extensions string) PermessageDeflate {
-	serverPD := permessageNegotiation(extensions)
-	clientPD := c.option.PermessageDeflate
-	pd := PermessageDeflate{
-		Enabled:               clientPD.Enabled && strings.Contains(extensions, internal.PermessageDeflate),
-		Threshold:             clientPD.Threshold,
-		Level:                 clientPD.Level,
-		PoolSize:              clientPD.PoolSize,
-		ServerContextTakeover: serverPD.ServerContextTakeover,
-		ClientContextTakeover: serverPD.ClientContextTakeover,
-		ServerMaxWindowBits:   serverPD.ServerMaxWindowBits,
-		ClientMaxWindowBits:   serverPD.ClientMaxWindowBits,
-	}
-	pd.setThreshold(false)
-	return pd
-}
-
 // 执行 WebSocket 握手操作
 // Performs the WebSocket handshake operation
 func (c *connector) handshake() (*Conn, *http.Response, error) {
@@ -170,13 +148,10 @@ func (c *connector) handshake() (*Conn, *http.Response, error) {
 		return nil, resp, err
 	}
 
-	extensions := resp.Header.Get(internal.SecWebSocketExtensions.Key)
-	pd := c.getPermessageDeflate(extensions)
 	socket := &Conn{
 		ss:                c.option.NewSession(),
 		isServer:          false,
 		subprotocol:       subprotocol,
-		pd:                pd,
 		conn:              c.conn,
 		config:            c.option.getConfig(),
 		br:                br,
@@ -184,22 +159,10 @@ func (c *connector) handshake() (*Conn, *http.Response, error) {
 		fh:                frameHeader{},
 		handler:           c.eventHandler,
 		closed:            0,
-		deflater:          new(deflater),
 		writeQueue:        workerQueue{maxConcurrency: 1},
 		readQueue:         make(channel, c.option.ParallelGolimit),
 	}
 
-	// 压缩字典和解压字典内存开销比较大, 故使用懒加载
-	// Compressing and decompressing dictionaries has a large memory overhead, so use lazy loading.
-	if pd.Enabled {
-		socket.deflater.initialize(false, pd, c.option.ReadMaxPayloadSize)
-		if pd.ServerContextTakeover {
-			socket.dpsWindow.initialize(nil, pd.ServerMaxWindowBits)
-		}
-		if pd.ClientContextTakeover {
-			socket.cpsWindow.initialize(nil, pd.ClientMaxWindowBits)
-		}
-	}
 	return socket, resp, c.conn.SetDeadline(time.Time{})
 }
 

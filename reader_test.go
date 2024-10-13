@@ -25,18 +25,8 @@ func TestReadSync(t *testing.T) {
 
 	serverHandler := new(webSocketMocker)
 	clientHandler := new(webSocketMocker)
-	serverOption := &ServerOption{PermessageDeflate: PermessageDeflate{
-		Enabled:               true,
-		ServerContextTakeover: true,
-		ClientContextTakeover: false,
-		ServerMaxWindowBits:   10,
-		ClientMaxWindowBits:   10,
-	}}
-	clientOption := &ClientOption{PermessageDeflate: PermessageDeflate{
-		Enabled:               true,
-		ServerContextTakeover: true,
-		ClientContextTakeover: true,
-	}}
+	serverOption := &ServerOption{}
+	clientOption := &ClientOption{}
 
 	serverHandler.onMessage = func(socket *Conn, message *Message) {
 		mu.Lock()
@@ -110,11 +100,9 @@ func TestRead(t *testing.T) {
 			CheckUtf8Enabled:    false,
 			ReadMaxPayloadSize:  1024 * 1024,
 			WriteMaxPayloadSize: 16 * 1024 * 1024,
-			PermessageDeflate:   PermessageDeflate{Enabled: true},
 		}
 		clientOption := &ClientOption{
 			ParallelEnabled:     true,
-			PermessageDeflate:   PermessageDeflate{Enabled: true, ServerContextTakeover: true, ClientContextTakeover: true},
 			CheckUtf8Enabled:    true,
 			ReadMaxPayloadSize:  1024 * 1024,
 			WriteMaxPayloadSize: 1024 * 1024,
@@ -242,63 +230,6 @@ func TestSegments(t *testing.T) {
 		}()
 		wg.Wait()
 	})
-
-	t.Run("illegal compression", func(t *testing.T) {
-		wg := &sync.WaitGroup{}
-		wg.Add(1)
-
-		serverHandler := new(webSocketMocker)
-		clientHandler := new(webSocketMocker)
-		serverOption := &ServerOption{}
-		clientOption := &ClientOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
-
-		s1 := internal.AlphabetNumeric.Generate(1024)
-		serverHandler.onClose = func(socket *Conn, err error) {
-			as.Error(err)
-			wg.Done()
-		}
-
-		server, client := newPeer(serverHandler, serverOption, clientHandler, clientOption)
-		go server.ReadLoop()
-		go client.ReadLoop()
-
-		go func() {
-			testWrite(client, true, OpcodeText, testCloneBytes(s1))
-		}()
-		wg.Wait()
-	})
-
-	t.Run("decompress error", func(t *testing.T) {
-		wg := &sync.WaitGroup{}
-		wg.Add(1)
-
-		serverHandler := new(webSocketMocker)
-		clientHandler := new(webSocketMocker)
-		serverOption := &ServerOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
-		clientOption := &ClientOption{PermessageDeflate: PermessageDeflate{Enabled: true}}
-
-		serverHandler.onClose = func(socket *Conn, err error) {
-			as.Error(err)
-			wg.Done()
-		}
-
-		server, client := newPeer(serverHandler, serverOption, clientHandler, clientOption)
-		go server.ReadLoop()
-		go client.ReadLoop()
-
-		go func() {
-			frame, _ := client.genFrame(OpcodeText, internal.Bytes(testdata), frameConfig{
-				fin:           true,
-				compress:      client.pd.Enabled,
-				broadcast:     false,
-				checkEncoding: client.config.CheckUtf8Enabled,
-			})
-			data := frame.Bytes()
-			data[20] = 'x'
-			client.conn.Write(data)
-		}()
-		wg.Wait()
-	})
 }
 
 func TestMessage(t *testing.T) {
@@ -323,7 +254,7 @@ func TestFrameHeader_Parse(t *testing.T) {
 		s, c := net.Pipe()
 		go func() {
 			h := frameHeader{}
-			h.GenerateHeader(false, true, false, OpcodeText, 500)
+			h.GenerateHeader(false, true, OpcodeText, 500)
 			c.Write(h[:2])
 			c.Close()
 		}()
@@ -338,7 +269,7 @@ func TestFrameHeader_Parse(t *testing.T) {
 		s, c := net.Pipe()
 		go func() {
 			h := frameHeader{}
-			h.GenerateHeader(false, true, false, OpcodeText, 1024*1024)
+			h.GenerateHeader(false, true, OpcodeText, 1024*1024)
 			c.Write(h[:2])
 			c.Close()
 		}()
@@ -353,7 +284,7 @@ func TestFrameHeader_Parse(t *testing.T) {
 		s, c := net.Pipe()
 		go func() {
 			h := frameHeader{}
-			h.GenerateHeader(false, true, false, OpcodeText, 1024*1024)
+			h.GenerateHeader(false, true, OpcodeText, 1024*1024)
 			c.Write(h[:10])
 			c.Close()
 		}()
@@ -373,7 +304,6 @@ func TestConn_ReadMessage(t *testing.T) {
 			p := []byte("123")
 			frame, _ := socket.genFrame(OpcodePing, internal.Bytes(p), frameConfig{
 				fin:           true,
-				compress:      socket.pd.Enabled,
 				broadcast:     false,
 				checkEncoding: socket.config.CheckUtf8Enabled,
 			})
@@ -386,11 +316,6 @@ func TestConn_ReadMessage(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		client, _, err := NewClient(new(BuiltinEventHandler), &ClientOption{
 			Addr: "ws://localhost" + addr,
-			PermessageDeflate: PermessageDeflate{
-				Enabled:               true,
-				ServerContextTakeover: true,
-				ClientContextTakeover: true,
-			},
 		})
 		assert.NoError(t, err)
 		client.ReadLoop()
@@ -403,7 +328,6 @@ func TestConn_ReadMessage(t *testing.T) {
 			p := []byte("123")
 			frame, _ := socket.genFrame(OpcodeText, internal.Bytes(p), frameConfig{
 				fin:           true,
-				compress:      socket.pd.Enabled,
 				broadcast:     false,
 				checkEncoding: false,
 			})
@@ -416,11 +340,6 @@ func TestConn_ReadMessage(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		client, _, err := NewClient(new(BuiltinEventHandler), &ClientOption{
 			Addr: "ws://localhost" + addr,
-			PermessageDeflate: PermessageDeflate{
-				Enabled:               true,
-				ServerContextTakeover: true,
-				ClientContextTakeover: true,
-			},
 		})
 		assert.NoError(t, err)
 		client.ReadLoop()

@@ -8,43 +8,23 @@ import (
 
 func main() {
 	s1 := gws.NewServer(&Handler{Sync: true}, &gws.ServerOption{
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		},
 		CheckUtf8Enabled: true,
 		Recovery:         gws.Recovery,
 	})
 
 	s2 := gws.NewServer(&Handler{Sync: false}, &gws.ServerOption{
-		ParallelEnabled: true,
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		},
+		ParallelEnabled:  true,
 		CheckUtf8Enabled: true,
 		Recovery:         gws.Recovery,
 	})
 
 	s3 := gws.NewServer(&Handler{Sync: true}, &gws.ServerOption{
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: false,
-			ClientContextTakeover: false,
-		},
 		CheckUtf8Enabled: true,
 		Recovery:         gws.Recovery,
 	})
 
 	s4 := gws.NewServer(&Handler{Sync: false}, &gws.ServerOption{
-		ParallelEnabled: true,
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: false,
-			ClientContextTakeover: false,
-		},
+		ParallelEnabled:  true,
 		CheckUtf8Enabled: true,
 		Recovery:         gws.Recovery,
 	})

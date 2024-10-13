@@ -9,15 +9,9 @@ import (
 )
 
 func main() {
-	var h = &Handler{conns: gws.NewConcurrentMap[string, *gws.Conn]()}
+	h := &Handler{conns: gws.NewConcurrentMap[string, *gws.Conn]()}
 
-	var upgrader = gws.NewUpgrader(h, &gws.ServerOption{
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		},
-	})
+	upgrader := gws.NewUpgrader(h, &gws.ServerOption{})
 
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		socket, err := upgrader.Upgrade(writer, request)
@@ -40,7 +34,7 @@ func main() {
 	}()
 
 	for {
-		var msg = ""
+		msg := ""
 		if _, err := fmt.Scanf("%s\n", &msg); err != nil {
 			log.Println(err.Error())
 			return
@@ -62,7 +56,7 @@ type Handler struct {
 }
 
 func (c *Handler) Broadcast(msg string) {
-	var b = gws.NewBroadcaster(gws.OpcodeText, []byte(msg))
+	b := gws.NewBroadcaster(gws.OpcodeText, []byte(msg))
 	c.conns.Range(func(key string, conn *gws.Conn) bool {
 		_ = b.Broadcast(conn)
 		return true

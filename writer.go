@@ -126,7 +126,6 @@ func (c *Conn) doWrite(opcode Opcode, payload internal.Payload) error {
 	// For context_takeover mode to work correctly, the contexts of compression, writing, and dictionary updating must be synchronized.
 	frame, err := c.genFrame(opcode, payload, frameConfig{
 		fin:           true,
-		compress:      c.pd.Enabled,
 		broadcast:     false,
 		checkEncoding: c.config.CheckUtf8Enabled,
 	})
@@ -134,7 +133,6 @@ func (c *Conn) doWrite(opcode Opcode, payload internal.Payload) error {
 		return err
 	}
 	err = internal.WriteN(c.conn, frame.Bytes())
-	_, _ = payload.WriteTo(&c.cpsWindow)
 	binaryPool.Put(frame)
 	return err
 }
@@ -145,10 +143,6 @@ type frameConfig struct {
 	// 结束标志位
 	// Finish flag
 	fin bool
-
-	// 是否开启压缩
-	// Whether to enable compression
-	compress bool
 
 	// 帧生成动作是否由广播发起
 	// Whether the frame generation action is initiated by a broadcast
@@ -173,37 +167,10 @@ func (c *Conn) genFrame(opcode Opcode, payload internal.Payload, cfg frameConfig
 	buf := binaryPool.Get(n + frameHeaderSize)
 	buf.Write(framePadding[0:])
 
-	if cfg.compress && opcode.isDataFrame() && n >= c.pd.Threshold {
-		return c.compressData(opcode, payload, buf, cfg)
-	}
-
 	header := frameHeader{}
-	headerLength, maskBytes := header.GenerateHeader(c.isServer, cfg.fin, false, opcode, n)
+	headerLength, maskBytes := header.GenerateHeader(c.isServer, cfg.fin, opcode, n)
 	_, _ = payload.WriteTo(buf)
 	contents := buf.Bytes()
-	if !c.isServer {
-		internal.MaskXOR(contents[frameHeaderSize:], maskBytes)
-	}
-	m := frameHeaderSize - headerLength
-	copy(contents[m:], header[:headerLength])
-	buf.Next(m)
-	return buf, nil
-}
-
-// 压缩数据并生成帧
-// Compresses the data and generates the frame
-func (c *Conn) compressData(opcode Opcode, payload internal.Payload, buf *bytes.Buffer, cfg frameConfig) (*bytes.Buffer, error) {
-	// 广播模式必须保证每一帧都是相同的内容, 所以不能使用字典优化压缩率
-	// Broadcast mode must ensure that every frame is the same, so you can't use a dictionary to optimize the compression rate.
-	dict := internal.SelectValue(cfg.broadcast, nil, c.cpsWindow.dict)
-	if err := c.deflater.Compress(payload, buf, dict); err != nil {
-		return nil, err
-	}
-
-	contents := buf.Bytes()
-	payloadSize := buf.Len() - frameHeaderSize
-	header := frameHeader{}
-	headerLength, maskBytes := header.GenerateHeader(c.isServer, cfg.fin, true, opcode, payloadSize)
 	if !c.isServer {
 		internal.MaskXOR(contents[frameHeaderSize:], maskBytes)
 	}
@@ -250,7 +217,6 @@ func (c *Broadcaster) writeFrame(socket *Conn, frame *bytes.Buffer) error {
 	}
 	socket.mu.Lock()
 	err := internal.WriteN(socket.conn, frame.Bytes())
-	_, _ = socket.cpsWindow.Write(c.payload)
 	socket.mu.Unlock()
 	return err
 }
@@ -259,13 +225,11 @@ func (c *Broadcaster) writeFrame(socket *Conn, frame *bytes.Buffer) error {
 // 向客户端发送广播消息
 // Send a broadcast message to a client.
 func (c *Broadcaster) Broadcast(socket *Conn) error {
-	idx := internal.SelectValue(socket.pd.Enabled, 1, 0)
-	msg := c.msgs[idx]
+	msg := c.msgs[0]
 
 	msg.once.Do(func() {
 		msg.frame, msg.err = socket.genFrame(c.opcode, internal.Bytes(c.payload), frameConfig{
 			fin:           true,
-			compress:      socket.pd.Enabled,
 			broadcast:     true,
 			checkEncoding: socket.config.CheckUtf8Enabled,
 		})

@@ -3,14 +3,11 @@ package gws
 import (
 	"bufio"
 	"bytes"
-	"compress/flate"
 	_ "embed"
 	"encoding/binary"
-	"io"
 	"net"
 	"testing"
 
-	klauspost "github.com/klauspost/compress/flate"
 	"github.com/lxzan/gws/internal"
 )
 
@@ -26,30 +23,11 @@ func (m benchConn) Write(p []byte) (n int, err error) {
 }
 
 func BenchmarkConn_WriteMessage(b *testing.B) {
-	b.Run("compress disabled", func(b *testing.B) {
+	b.Run("", func(b *testing.B) {
 		upgrader := NewUpgrader(&BuiltinEventHandler{}, nil)
 		conn := &Conn{
 			conn:   &benchConn{},
 			config: upgrader.option.getConfig(),
-		}
-		for i := 0; i < b.N; i++ {
-			_ = conn.WriteMessage(OpcodeText, githubData)
-		}
-	})
-
-	b.Run("compress enabled", func(b *testing.B) {
-		upgrader := NewUpgrader(&BuiltinEventHandler{}, &ServerOption{
-			PermessageDeflate: PermessageDeflate{
-				Enabled:  true,
-				PoolSize: 64,
-			},
-		})
-		config := upgrader.option.getConfig()
-		conn := &Conn{
-			conn:     &benchConn{},
-			pd:       PermessageDeflate{Enabled: true},
-			config:   config,
-			deflater: upgrader.deflaterPool.Select(),
 		}
 		for i := 0; i < b.N; i++ {
 			_ = conn.WriteMessage(OpcodeText, githubData)
@@ -61,7 +39,7 @@ func BenchmarkConn_ReadMessage(b *testing.B) {
 	handler := &webSocketMocker{}
 	handler.onMessage = func(socket *Conn, message *Message) { _ = message.Close() }
 
-	b.Run("compress disabled", func(b *testing.B) {
+	b.Run("", func(b *testing.B) {
 		upgrader := NewUpgrader(handler, nil)
 		conn1 := &Conn{
 			isServer: false,
@@ -70,7 +48,6 @@ func BenchmarkConn_ReadMessage(b *testing.B) {
 		}
 		buf, _ := conn1.genFrame(OpcodeText, internal.Bytes(githubData), frameConfig{
 			fin:           true,
-			compress:      conn1.pd.Enabled,
 			broadcast:     false,
 			checkEncoding: false,
 		})
@@ -89,104 +66,6 @@ func BenchmarkConn_ReadMessage(b *testing.B) {
 			_ = conn2.readMessage()
 		}
 	})
-
-	b.Run("compress enabled", func(b *testing.B) {
-		upgrader := NewUpgrader(handler, &ServerOption{
-			PermessageDeflate: PermessageDeflate{Enabled: true},
-		})
-		config := upgrader.option.getConfig()
-		conn1 := &Conn{
-			isServer: false,
-			conn:     &benchConn{},
-			pd:       upgrader.option.PermessageDeflate,
-			config:   config,
-			deflater: new(deflater),
-		}
-		conn1.deflater.initialize(false, conn1.pd, config.ReadMaxPayloadSize)
-		buf, _ := conn1.genFrame(OpcodeText, internal.Bytes(githubData), frameConfig{
-			fin:           true,
-			compress:      conn1.pd.Enabled,
-			broadcast:     false,
-			checkEncoding: false,
-		})
-
-		reader := bytes.NewBuffer(buf.Bytes())
-		conn2 := &Conn{
-			isServer: true,
-			conn:     &benchConn{},
-			br:       bufio.NewReader(reader),
-			config:   upgrader.option.getConfig(),
-			pd:       upgrader.option.PermessageDeflate,
-			handler:  upgrader.eventHandler,
-			deflater: upgrader.deflaterPool.Select(),
-		}
-		for i := 0; i < b.N; i++ {
-			internal.BufferReset(reader, buf.Bytes())
-			conn2.br.Reset(reader)
-			_ = conn2.readMessage()
-		}
-	})
-}
-
-func BenchmarkStdCompress(b *testing.B) {
-	fw, _ := flate.NewWriter(nil, flate.BestSpeed)
-	contents := githubData
-	buffer := bytes.NewBuffer(make([]byte, len(githubData)))
-	for i := 0; i < b.N; i++ {
-		buffer.Reset()
-		fw.Reset(buffer)
-		fw.Write(contents)
-		fw.Flush()
-	}
-}
-
-func BenchmarkKlauspostCompress(b *testing.B) {
-	fw, _ := klauspost.NewWriter(nil, flate.BestSpeed)
-	contents := githubData
-	buffer := bytes.NewBuffer(make([]byte, len(githubData)))
-	for i := 0; i < b.N; i++ {
-		buffer.Reset()
-		fw.Reset(buffer)
-		fw.Write(contents)
-		fw.Flush()
-	}
-}
-
-func BenchmarkStdDeCompress(b *testing.B) {
-	buffer := bytes.NewBuffer(make([]byte, 0, len(githubData)))
-	fw, _ := flate.NewWriter(buffer, flate.BestSpeed)
-	contents := githubData
-	fw.Write(contents)
-	fw.Flush()
-
-	p := make([]byte, 4096)
-	fr := flate.NewReader(nil)
-	src := bytes.NewBuffer(nil)
-	for i := 0; i < b.N; i++ {
-		internal.BufferReset(src, buffer.Bytes())
-		_, _ = src.Write(flateTail)
-		resetter := fr.(flate.Resetter)
-		_ = resetter.Reset(src, nil)
-		io.CopyBuffer(io.Discard, fr, p)
-	}
-}
-
-func BenchmarkKlauspostDeCompress(b *testing.B) {
-	buffer := bytes.NewBuffer(make([]byte, 0, len(githubData)))
-	fw, _ := klauspost.NewWriter(buffer, klauspost.BestSpeed)
-	contents := githubData
-	fw.Write(contents)
-	fw.Flush()
-
-	fr := klauspost.NewReader(nil)
-	src := bytes.NewBuffer(nil)
-	for i := 0; i < b.N; i++ {
-		internal.BufferReset(src, buffer.Bytes())
-		_, _ = src.Write(flateTail)
-		resetter := fr.(klauspost.Resetter)
-		_ = resetter.Reset(src, nil)
-		fr.(io.WriterTo).WriteTo(io.Discard)
-	}
 }
 
 func BenchmarkMask(b *testing.B) {

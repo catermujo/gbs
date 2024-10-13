@@ -93,7 +93,6 @@ func (c *responseWriter) Write(conn net.Conn, timeout time.Duration) error {
 
 type Upgrader struct {
 	option       *ServerOption
-	deflaterPool *deflaterPool
 	eventHandler Event
 }
 
@@ -103,10 +102,6 @@ func NewUpgrader(eventHandler Event, option *ServerOption) *Upgrader {
 	u := &Upgrader{
 		option:       initServerOption(option),
 		eventHandler: eventHandler,
-		deflaterPool: new(deflaterPool),
-	}
-	if u.option.PermessageDeflate.Enabled {
-		u.deflaterPool.initialize(u.option.PermessageDeflate, option.ReadMaxPayloadSize)
 	}
 	return u
 }
@@ -125,25 +120,6 @@ func (c *Upgrader) hijack(w http.ResponseWriter) (net.Conn, *bufio.Reader, error
 	br := c.option.config.brPool.Get()
 	br.Reset(netConn)
 	return netConn, br, nil
-}
-
-// 根据客户端和服务器的扩展协商结果获取 PermessageDeflate 配置
-// Gets the PermessageDeflate configuration based on the negotiation results between the client and server extensions
-func (c *Upgrader) getPermessageDeflate(extensions string) PermessageDeflate {
-	clientPD := permessageNegotiation(extensions)
-	serverPD := c.option.PermessageDeflate
-	pd := PermessageDeflate{
-		Enabled:               serverPD.Enabled && strings.Contains(extensions, internal.PermessageDeflate),
-		Threshold:             serverPD.Threshold,
-		Level:                 serverPD.Level,
-		PoolSize:              serverPD.PoolSize,
-		ServerContextTakeover: clientPD.ServerContextTakeover && serverPD.ServerContextTakeover,
-		ClientContextTakeover: clientPD.ClientContextTakeover && serverPD.ClientContextTakeover,
-		ServerMaxWindowBits:   serverPD.ServerMaxWindowBits,
-		ClientMaxWindowBits:   serverPD.ClientMaxWindowBits,
-	}
-	pd.setThreshold(true)
-	return pd
 }
 
 // Upgrade 升级 HTTP 连接到 WebSocket 连接
@@ -211,12 +187,6 @@ func (c *Upgrader) doUpgradeFromConn(netConn net.Conn, br *bufio.Reader, r *http
 	rw := new(responseWriter).Init()
 	defer rw.Close()
 
-	extensions := r.Header.Get(internal.SecWebSocketExtensions.Key)
-	pd := c.getPermessageDeflate(extensions)
-	if pd.Enabled {
-		rw.WithHeader(internal.SecWebSocketExtensions.Key, pd.genResponseHeader())
-	}
-
 	websocketKey := r.Header.Get(internal.SecWebSocketKey.Key)
 	if websocketKey == "" {
 		return nil, ErrHandshake
@@ -233,7 +203,6 @@ func (c *Upgrader) doUpgradeFromConn(netConn net.Conn, br *bufio.Reader, r *http
 		ss:                session,
 		isServer:          true,
 		subprotocol:       rw.subprotocol,
-		pd:                pd,
 		conn:              netConn,
 		config:            config,
 		br:                br,
@@ -245,17 +214,6 @@ func (c *Upgrader) doUpgradeFromConn(netConn net.Conn, br *bufio.Reader, r *http
 		readQueue:         make(channel, c.option.ParallelGolimit),
 	}
 
-	// 压缩字典和解压字典内存开销比较大, 故使用懒加载
-	// Compressing and decompressing dictionaries has a large memory overhead, so use lazy loading.
-	if pd.Enabled {
-		socket.deflater = c.deflaterPool.Select()
-		if pd.ServerContextTakeover {
-			socket.cpsWindow.initialize(config.cswPool, pd.ServerMaxWindowBits)
-		}
-		if pd.ClientContextTakeover {
-			socket.dpsWindow.initialize(config.dswPool, pd.ClientMaxWindowBits)
-		}
-	}
 	return socket, nil
 }
 

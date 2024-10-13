@@ -76,8 +76,7 @@ func TestNewClientFromConn(t *testing.T) {
 func TestClientHandshake(t *testing.T) {
 	as := assert.New(t)
 	option := &ClientOption{
-		RequestHeader:     http.Header{},
-		PermessageDeflate: PermessageDeflate{Enabled: true},
+		RequestHeader: http.Header{},
 	}
 	option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 	option = initClientOption(option)
@@ -108,8 +107,7 @@ func TestClientHandshakeFail(t *testing.T) {
 
 	t.Run("", func(t *testing.T) {
 		option := &ClientOption{
-			RequestHeader:     http.Header{},
-			PermessageDeflate: PermessageDeflate{Enabled: true},
+			RequestHeader: http.Header{},
 		}
 		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 		option = initClientOption(option)
@@ -135,8 +133,7 @@ func TestClientHandshakeFail(t *testing.T) {
 
 	t.Run("", func(t *testing.T) {
 		option := &ClientOption{
-			PermessageDeflate: PermessageDeflate{Enabled: true},
-			RequestHeader:     http.Header{},
+			RequestHeader: http.Header{},
 		}
 		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 		option = initClientOption(option)
@@ -162,8 +159,7 @@ func TestClientHandshakeFail(t *testing.T) {
 
 	t.Run("", func(t *testing.T) {
 		option := &ClientOption{
-			PermessageDeflate: PermessageDeflate{Enabled: true},
-			RequestHeader:     http.Header{},
+			RequestHeader: http.Header{},
 		}
 		option = initClientOption(option)
 		srv, cli := net.Pipe()
@@ -188,8 +184,7 @@ func TestClientHandshakeFail(t *testing.T) {
 
 	t.Run("", func(t *testing.T) {
 		option := &ClientOption{
-			PermessageDeflate: PermessageDeflate{Enabled: true},
-			RequestHeader:     http.Header{},
+			RequestHeader: http.Header{},
 		}
 		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 		option = initClientOption(option)
@@ -215,8 +210,7 @@ func TestClientHandshakeFail(t *testing.T) {
 
 	t.Run("", func(t *testing.T) {
 		option := &ClientOption{
-			PermessageDeflate: PermessageDeflate{Enabled: true},
-			RequestHeader:     http.Header{},
+			RequestHeader: http.Header{},
 		}
 		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 		option = initClientOption(option)
@@ -242,8 +236,7 @@ func TestClientHandshakeFail(t *testing.T) {
 
 	t.Run("deflate", func(t *testing.T) {
 		option := &ClientOption{
-			PermessageDeflate: PermessageDeflate{Enabled: true},
-			RequestHeader:     http.Header{},
+			RequestHeader: http.Header{},
 		}
 		option.RequestHeader.Set(internal.SecWebSocketKey.Key, "1fTfP/qALD+eAWcU80P0bg==")
 		option = initClientOption(option)
