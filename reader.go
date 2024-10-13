@@ -1,11 +1,11 @@
-package gws
+package gbs
 
 import (
 	"bytes"
 	"fmt"
 	"unsafe"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 )
 
 // 检查掩码设置是否符合 RFC6455 协议。
@@ -59,7 +59,7 @@ func (c *Conn) readControl() error {
 	case OpcodeCloseConnection:
 		return c.emitClose(bytes.NewBuffer(payload))
 	default:
-		err := fmt.Errorf("gws: unexpected opcode %d", opcode)
+		err := fmt.Errorf("gbs: unexpected opcode %d", opcode)
 		return internal.NewError(internal.CloseProtocolError, err)
 	}
 }

@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 )
 
 // WriteClose 发送关闭帧并断开连接

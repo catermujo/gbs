@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"bufio"
@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 )
 
 // Conn WebSocket连接

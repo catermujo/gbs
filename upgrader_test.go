@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"bufio"
@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -105,7 +105,7 @@ func TestAccept(t *testing.T) {
 	upgrader := NewUpgrader(new(webSocketMocker), &ServerOption{
 		ReadBufferSize: 1024,
 		ResponseHeader: http.Header{
-			"Server": []string{"gws"},
+			"Server": []string{"gbs"},
 		},
 	})
 
@@ -204,7 +204,7 @@ func TestAccept(t *testing.T) {
 
 func TestFailHijack(t *testing.T) {
 	upgrader := NewUpgrader(new(webSocketMocker), &ServerOption{
-		ResponseHeader: http.Header{"Server": []string{"gws"}},
+		ResponseHeader: http.Header{"Server": []string{"gbs"}},
 	})
 	request := &http.Request{
 		Header: http.Header{},

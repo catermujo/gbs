@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"bufio"
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 )
 
 type responseWriter struct {
@@ -175,7 +175,7 @@ func (c *Upgrader) doUpgradeFromConn(netConn net.Conn, br *bufio.Reader, r *http
 		return nil, ErrHandshake
 	}
 	if !strings.EqualFold(r.Header.Get(internal.SecWebSocketVersion.Key), internal.SecWebSocketVersion.Val) {
-		return nil, errors.New("gws: websocket version not supported")
+		return nil, errors.New("gbs: websocket version not supported")
 	}
 	if !internal.HttpHeaderContains(r.Header.Get(internal.Connection.Key), internal.Connection.Val) {
 		return nil, ErrHandshake
@@ -242,7 +242,7 @@ type Server struct {
 func NewServer(eventHandler Event, option *ServerOption) *Server {
 	c := &Server{upgrader: NewUpgrader(eventHandler, option)}
 	c.option = c.upgrader.option
-	c.OnError = func(conn net.Conn, err error) { c.option.Logger.Error("gws: " + err.Error()) }
+	c.OnError = func(conn net.Conn, err error) { c.option.Logger.Error("gbs: " + err.Error()) }
 	c.OnRequest = func(conn net.Conn, br *bufio.Reader, r *http.Request) {
 		socket, err := c.GetUpgrader().UpgradeFromConn(conn, br, r)
 		if err != nil {

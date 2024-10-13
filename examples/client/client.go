@@ -5,11 +5,11 @@ import (
 	"log"
 	"strings"
 
-	"github.com/lxzan/gws"
+	"github.com/isinyaaa/gbs"
 )
 
 func main() {
-	socket, _, err := gws.NewClient(new(WebSocket), &gws.ClientOption{
+	socket, _, err := gbs.NewClient(new(WebSocket), &gbs.ClientOption{
 		Addr: "ws://127.0.0.1:3000/connect",
 	})
 	if err != nil {
@@ -30,22 +30,22 @@ func main() {
 
 type WebSocket struct{}
 
-func (c *WebSocket) OnClose(socket *gws.Conn, err error) {
+func (c *WebSocket) OnClose(socket *gbs.Conn, err error) {
 	fmt.Printf("onerror: err=%s\n", err.Error())
 }
 
-func (c *WebSocket) OnPong(socket *gws.Conn, payload []byte) {
+func (c *WebSocket) OnPong(socket *gbs.Conn, payload []byte) {
 }
 
-func (c *WebSocket) OnOpen(socket *gws.Conn) {
+func (c *WebSocket) OnOpen(socket *gbs.Conn) {
 	_ = socket.WriteString("hello, there is client")
 }
 
-func (c *WebSocket) OnPing(socket *gws.Conn, payload []byte) {
+func (c *WebSocket) OnPing(socket *gbs.Conn, payload []byte) {
 	_ = socket.WritePong(payload)
 }
 
-func (c *WebSocket) OnMessage(socket *gws.Conn, message *gws.Message) {
+func (c *WebSocket) OnMessage(socket *gbs.Conn, message *gbs.Message) {
 	defer message.Close()
 	fmt.Printf("recv: %s\n", message.Data.String())
 }

@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 )
 
 const frameHeaderSize = 14
@@ -45,7 +45,7 @@ type CloseError struct {
 // Error 关闭错误的描述
 // Returns a description of the close error
 func (c *CloseError) Error() string {
-	return fmt.Sprintf("gws: connection closed, code=%d, reason=%s", c.Code, string(c.Reason))
+	return fmt.Sprintf("gbs: connection closed, code=%d, reason=%s", c.Code, string(c.Reason))
 }
 
 var (

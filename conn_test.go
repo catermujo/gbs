@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 	"github.com/stretchr/testify/assert"
 )
 

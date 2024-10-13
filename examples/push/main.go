@@ -5,13 +5,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/lxzan/gws"
+	"github.com/isinyaaa/gbs"
 )
 
 func main() {
-	h := &Handler{conns: gws.NewConcurrentMap[string, *gws.Conn]()}
+	h := &Handler{conns: gbs.NewConcurrentMap[string, *gbs.Conn]()}
 
-	upgrader := gws.NewUpgrader(h, &gws.ServerOption{})
+	upgrader := gbs.NewUpgrader(h, &gbs.ServerOption{})
 
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		socket, err := upgrader.Upgrade(writer, request)
@@ -43,7 +43,7 @@ func main() {
 	}
 }
 
-func getSession[T any](s gws.SessionStorage, key string) (val T) {
+func getSession[T any](s gbs.SessionStorage, key string) (val T) {
 	if v, ok := s.Load(key); ok {
 		val, _ = v.(T)
 	}
@@ -51,24 +51,24 @@ func getSession[T any](s gws.SessionStorage, key string) (val T) {
 }
 
 type Handler struct {
-	gws.BuiltinEventHandler
-	conns *gws.ConcurrentMap[string, *gws.Conn]
+	gbs.BuiltinEventHandler
+	conns *gbs.ConcurrentMap[string, *gbs.Conn]
 }
 
 func (c *Handler) Broadcast(msg string) {
-	b := gws.NewBroadcaster(gws.OpcodeText, []byte(msg))
-	c.conns.Range(func(key string, conn *gws.Conn) bool {
+	b := gbs.NewBroadcaster(gbs.OpcodeText, []byte(msg))
+	c.conns.Range(func(key string, conn *gbs.Conn) bool {
 		_ = b.Broadcast(conn)
 		return true
 	})
 	_ = b.Close()
 }
 
-func (c *Handler) OnClose(socket *gws.Conn, err error) {
+func (c *Handler) OnClose(socket *gbs.Conn, err error) {
 	websocketKey := getSession[string](socket.Session(), "websocketKey")
 	c.conns.Delete(websocketKey)
 }
 
-func (c *Handler) OnMessage(socket *gws.Conn, message *gws.Message) {
+func (c *Handler) OnMessage(socket *gbs.Conn, message *gbs.Message) {
 	defer message.Close()
 }

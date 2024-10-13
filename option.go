@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"bufio"
@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 )
 
 const (

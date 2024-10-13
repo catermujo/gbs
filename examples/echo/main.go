@@ -4,13 +4,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/lxzan/gws"
+	"github.com/isinyaaa/gbs"
 )
 
 func main() {
-	upgrader := gws.NewUpgrader(&Handler{}, &gws.ServerOption{
+	upgrader := gbs.NewUpgrader(&Handler{}, &gbs.ServerOption{
 		CheckUtf8Enabled: true,
-		Recovery:         gws.Recovery,
+		Recovery:         gbs.Recovery,
 	})
 	http.HandleFunc("/connect", func(writer http.ResponseWriter, request *http.Request) {
 		socket, err := upgrader.Upgrade(writer, request)
@@ -27,14 +27,14 @@ func main() {
 }
 
 type Handler struct {
-	gws.BuiltinEventHandler
+	gbs.BuiltinEventHandler
 }
 
-func (c *Handler) OnPing(socket *gws.Conn, payload []byte) {
+func (c *Handler) OnPing(socket *gbs.Conn, payload []byte) {
 	_ = socket.WritePong(payload)
 }
 
-func (c *Handler) OnMessage(socket *gws.Conn, message *gws.Message) {
+func (c *Handler) OnMessage(socket *gbs.Conn, message *gbs.Message) {
 	defer message.Close()
 	_ = socket.WriteMessage(message.Opcode, message.Bytes())
 }

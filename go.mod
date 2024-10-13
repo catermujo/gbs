@@ -1,4 +1,4 @@
-module github.com/lxzan/gws
+module github.com/isinyaaa/gbs
 
 go 1.20
 

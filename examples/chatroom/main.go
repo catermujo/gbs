@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lxzan/gws"
+	"github.com/isinyaaa/gbs"
 )
 
 const (
@@ -20,11 +20,11 @@ var html []byte
 
 func main() {
 	handler := NewWebSocket()
-	upgrader := gws.NewUpgrader(handler, &gws.ServerOption{
+	upgrader := gbs.NewUpgrader(handler, &gbs.ServerOption{
 		// 在querystring里面传入用户名
 		// 把Sec-WebSocket-Key作为连接的key
 		// 刷新页面的时候, 会触发上一个连接的OnClose/OnError事件, 这时候需要对比key并删除map里存储的连接
-		Authorize: func(r *http.Request, session gws.SessionStorage) bool {
+		Authorize: func(r *http.Request, session gbs.SessionStorage) bool {
 			name := r.URL.Query().Get("name")
 			if name == "" {
 				return false
@@ -53,7 +53,7 @@ func main() {
 	}
 }
 
-func MustLoad[T any](session gws.SessionStorage, key string) (v T) {
+func MustLoad[T any](session gbs.SessionStorage, key string) (v T) {
 	if value, exist := session.Load(key); exist {
 		v, _ = value.(T)
 	}
@@ -62,15 +62,15 @@ func MustLoad[T any](session gws.SessionStorage, key string) (v T) {
 
 func NewWebSocket() *WebSocket {
 	return &WebSocket{
-		sessions: gws.NewConcurrentMap[string, *gws.Conn](16, 128),
+		sessions: gbs.NewConcurrentMap[string, *gbs.Conn](16, 128),
 	}
 }
 
 type WebSocket struct {
-	sessions *gws.ConcurrentMap[string, *gws.Conn] // 使用内置的ConcurrentMap存储连接, 可以减少锁冲突
+	sessions *gbs.ConcurrentMap[string, *gbs.Conn] // 使用内置的ConcurrentMap存储连接, 可以减少锁冲突
 }
 
-func (c *WebSocket) OnOpen(socket *gws.Conn) {
+func (c *WebSocket) OnOpen(socket *gbs.Conn) {
 	name := MustLoad[string](socket.Session(), "name")
 	if conn, ok := c.sessions.Load(name); ok {
 		conn.WriteClose(1000, []byte("connection is replaced"))
@@ -80,7 +80,7 @@ func (c *WebSocket) OnOpen(socket *gws.Conn) {
 	log.Printf("%s connected\n", name)
 }
 
-func (c *WebSocket) OnClose(socket *gws.Conn, err error) {
+func (c *WebSocket) OnClose(socket *gbs.Conn, err error) {
 	name := MustLoad[string](socket.Session(), "name")
 	sharding := c.sessions.GetSharding(name)
 	sharding.Lock()
@@ -96,19 +96,19 @@ func (c *WebSocket) OnClose(socket *gws.Conn, err error) {
 	log.Printf("onerror, name=%s, msg=%s\n", name, err.Error())
 }
 
-func (c *WebSocket) OnPing(socket *gws.Conn, payload []byte) {
+func (c *WebSocket) OnPing(socket *gbs.Conn, payload []byte) {
 	_ = socket.SetDeadline(time.Now().Add(PingInterval + HeartbeatWaitTimeout))
 	_ = socket.WriteString("pong")
 }
 
-func (c *WebSocket) OnPong(socket *gws.Conn, payload []byte) {}
+func (c *WebSocket) OnPong(socket *gbs.Conn, payload []byte) {}
 
 type Input struct {
 	To   string `json:"to"`
 	Text string `json:"text"`
 }
 
-func (c *WebSocket) OnMessage(socket *gws.Conn, message *gws.Message) {
+func (c *WebSocket) OnMessage(socket *gbs.Conn, message *gbs.Message) {
 	defer message.Close()
 
 	// chrome websocket不支持ping方法, 所以在text frame里面模拟ping
@@ -120,6 +120,6 @@ func (c *WebSocket) OnMessage(socket *gws.Conn, message *gws.Message) {
 	input := &Input{}
 	_ = json.Unmarshal(message.Bytes(), input)
 	if conn, ok := c.sessions.Load(input.To); ok {
-		_ = conn.WriteMessage(gws.OpcodeText, message.Bytes())
+		_ = conn.WriteMessage(gbs.OpcodeText, message.Bytes())
 	}
 }

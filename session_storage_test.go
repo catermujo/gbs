@@ -1,10 +1,10 @@
-package gws
+package gbs
 
 import (
 	"testing"
 
 	"github.com/dolthub/maphash"
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 	"github.com/stretchr/testify/assert"
 )
 

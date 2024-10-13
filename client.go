@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"bufio"
@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 )
 
 // Dialer 拨号器接口

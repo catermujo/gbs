@@ -80,7 +80,7 @@ func (c StatusCode) Bytes() []byte {
 }
 
 func (c StatusCode) Error() string {
-	return "gws: " + closeErrorMap[c]
+	return "gbs: " + closeErrorMap[c]
 }
 
 func NewError(code StatusCode, err error) *Error {

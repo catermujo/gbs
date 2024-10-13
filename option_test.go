@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"net/http"
@@ -47,7 +47,7 @@ func TestDefaultUpgrader(t *testing.T) {
 	updrader := NewUpgrader(new(BuiltinEventHandler), &ServerOption{
 		ResponseHeader: http.Header{
 			"Sec-Websocket-Extensions": []string{"chat"},
-			"X-Server":                 []string{"gws"},
+			"X-Server":                 []string{"gbs"},
 		},
 	})
 	config := updrader.option.getConfig()
@@ -65,7 +65,7 @@ func TestDefaultUpgrader(t *testing.T) {
 	as.NotNil(updrader.option.NewSession)
 	as.Nil(updrader.option.SubProtocols)
 	as.Equal("", updrader.option.ResponseHeader.Get("Sec-Websocket-Extensions"))
-	as.Equal("gws", updrader.option.ResponseHeader.Get("X-Server"))
+	as.Equal("gbs", updrader.option.ResponseHeader.Get("X-Server"))
 	validateServerOption(as, updrader)
 }
 

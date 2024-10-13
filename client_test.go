@@ -1,4 +1,4 @@
-package gws
+package gbs
 
 import (
 	"crypto/tls"
@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lxzan/gws/internal"
+	"github.com/isinyaaa/gbs/internal"
 	"github.com/stretchr/testify/assert"
 )
 
