@@ -66,15 +66,15 @@ func (c *Conn) readControl() error {
 
 // 读取消息
 // Reads a message
-func (c *Conn) readMessage() error {
+func (c *Conn) readFrame() (*Message, error) {
 	// 解析帧头并获取内容长度
 	// Parse the frame header and get the content length
 	contentLength, err := c.fh.Parse(c.br)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if contentLength > c.config.ReadMaxPayloadSize {
-		return internal.CloseMessageTooLarge
+		return nil, internal.CloseMessageTooLarge
 	}
 
 	// RSV1, RSV2, RSV3: 每个占 1 位
@@ -85,17 +85,17 @@ func (c *Conn) readMessage() error {
 	// If a nonzero value is received and none of the negotiated extensions defines the meaning of such a nonzero value,
 	// the receiving endpoint MUST _Fail the WebSocket Connection_.
 	if c.fh.GetRSV1() || c.fh.GetRSV2() || c.fh.GetRSV3() {
-		return internal.CloseProtocolError
+		return nil, internal.CloseProtocolError
 	}
 
 	maskEnabled := c.fh.GetMask()
 	if err := c.checkMask(maskEnabled); err != nil {
-		return err
+		return nil, err
 	}
 
 	opcode := c.fh.GetOpcode()
 	if !opcode.isDataFrame() {
-		return c.readControl()
+		return nil, c.readControl()
 	}
 
 	fin := c.fh.GetFIN()
@@ -105,20 +105,20 @@ func (c *Conn) readMessage() error {
 	defer closer.Close()
 
 	if err := internal.ReadN(c.br, p); err != nil {
-		return err
+		return nil, err
 	}
 	if maskEnabled {
 		internal.MaskXOR(p, c.fh.GetMaskKey())
 	}
 
 	if opcode != OpcodeContinuation && c.continuationFrame.initialized {
-		return internal.CloseProtocolError
+		return nil, internal.CloseProtocolError
 	}
 
 	if fin && opcode != OpcodeContinuation {
 		*(*[]byte)(unsafe.Pointer(buf)) = p
 		closer.Data = nil
-		return c.emitMessage(&Message{Opcode: opcode, Data: buf})
+		return &Message{Opcode: opcode, Data: buf}, nil
 	}
 
 	// 处理分片消息
@@ -129,20 +129,43 @@ func (c *Conn) readMessage() error {
 		c.continuationFrame.buffer = bytes.NewBuffer(make([]byte, 0, contentLength))
 	}
 	if !c.continuationFrame.initialized {
-		return internal.CloseProtocolError
+		return nil, internal.CloseProtocolError
 	}
 
 	c.continuationFrame.buffer.Write(p)
 	if c.continuationFrame.buffer.Len() > c.config.ReadMaxPayloadSize {
-		return internal.CloseMessageTooLarge
+		return nil, internal.CloseMessageTooLarge
 	}
 	if !fin {
-		return nil
+		return nil, nil
 	}
 
 	msg := &Message{Opcode: c.continuationFrame.opcode, Data: c.continuationFrame.buffer}
 	c.continuationFrame.reset()
-	return c.emitMessage(msg)
+	return msg, nil
+}
+
+func (c *Conn) ReadMessage() (*Message, error) {
+	for {
+		msg, err := c.readFrame()
+		if err != nil {
+			return nil, err
+		}
+		if msg != nil {
+			return msg, nil
+		}
+	}
+}
+
+func (c *Conn) readMessage() error {
+	msg, err := c.readFrame()
+	if err != nil {
+		return err
+	}
+	if msg != nil {
+		return c.emitMessage(msg)
+	}
+	return nil
 }
 
 // 分发消息和异常恢复
