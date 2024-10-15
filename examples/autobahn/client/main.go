@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/lxzan/gws"
+	"github.com/isinyaaa/gbs"
 )
 
 const remoteAddr = "127.0.0.1:9001"
@@ -13,10 +13,10 @@ const remoteAddr = "127.0.0.1:9001"
 func main() {
 	const count = 517
 	for i := 1; i <= count; i++ {
-		testCase(true, i, "gws-client/sync")
+		testCase(true, i, "gbs-client/sync")
 	}
 	for i := 1; i <= count; i++ {
-		testCase(false, i, "gws-client/async")
+		testCase(false, i, "gbs-client/async")
 	}
 	updateReports()
 }
@@ -24,7 +24,7 @@ func main() {
 func testCase(sync bool, id int, agent string) {
 	url := fmt.Sprintf("ws://%s/runCase?case=%d&agent=%s", remoteAddr, id, agent)
 	handler := &WebSocket{Sync: sync, onexit: make(chan struct{})}
-	socket, _, err := gws.NewClient(handler, &gws.ClientOption{
+	socket, _, err := gbs.NewClient(handler, &gbs.ClientOption{
 		Addr:             url,
 		CheckUtf8Enabled: true,
 	})
@@ -41,21 +41,21 @@ type WebSocket struct {
 	Sync   bool
 }
 
-func (c *WebSocket) OnOpen(socket *gws.Conn) {
+func (c *WebSocket) OnOpen(socket *gbs.Conn) {
 	_ = socket.SetDeadline(time.Now().Add(30 * time.Second))
 }
 
-func (c *WebSocket) OnClose(socket *gws.Conn, err error) {
+func (c *WebSocket) OnClose(socket *gbs.Conn, err error) {
 	c.onexit <- struct{}{}
 }
 
-func (c *WebSocket) OnPing(socket *gws.Conn, payload []byte) {
+func (c *WebSocket) OnPing(socket *gbs.Conn, payload []byte) {
 	_ = socket.WritePong(payload)
 }
 
-func (c *WebSocket) OnPong(socket *gws.Conn, payload []byte) {}
+func (c *WebSocket) OnPong(socket *gbs.Conn, payload []byte) {}
 
-func (c *WebSocket) OnMessage(socket *gws.Conn, message *gws.Message) {
+func (c *WebSocket) OnMessage(socket *gbs.Conn, message *gbs.Message) {
 	if c.Sync {
 		_ = socket.WriteMessage(message.Opcode, message.Bytes())
 		_ = message.Close()
@@ -65,22 +65,22 @@ func (c *WebSocket) OnMessage(socket *gws.Conn, message *gws.Message) {
 }
 
 type updateReportsHandler struct {
-	gws.BuiltinEventHandler
+	gbs.BuiltinEventHandler
 	onexit chan struct{}
 }
 
-func (c *updateReportsHandler) OnOpen(socket *gws.Conn) {
+func (c *updateReportsHandler) OnOpen(socket *gbs.Conn) {
 	_ = socket.SetDeadline(time.Now().Add(5 * time.Second))
 }
 
-func (c *updateReportsHandler) OnClose(socket *gws.Conn, err error) {
+func (c *updateReportsHandler) OnClose(socket *gbs.Conn, err error) {
 	c.onexit <- struct{}{}
 }
 
 func updateReports() {
-	url := fmt.Sprintf("ws://%s/updateReports?agent=gws/client", remoteAddr)
+	url := fmt.Sprintf("ws://%s/updateReports?agent=gbs/client", remoteAddr)
 	handler := &updateReportsHandler{onexit: make(chan struct{})}
-	socket, _, err := gws.NewClient(handler, &gws.ClientOption{
+	socket, _, err := gbs.NewClient(handler, &gbs.ClientOption{
 		Addr:             url,
 		CheckUtf8Enabled: true,
 	})

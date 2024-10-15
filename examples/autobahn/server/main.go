@@ -3,30 +3,30 @@ package main
 import (
 	"log"
 
-	"github.com/lxzan/gws"
+	"github.com/isinyaaa/gbs"
 )
 
 func main() {
-	s1 := gws.NewServer(&Handler{Sync: true}, &gws.ServerOption{
+	s1 := gbs.NewServer(&Handler{Sync: true}, &gbs.ServerOption{
 		CheckUtf8Enabled: true,
-		Recovery:         gws.Recovery,
+		Recovery:         gbs.Recovery,
 	})
 
-	s2 := gws.NewServer(&Handler{Sync: false}, &gws.ServerOption{
+	s2 := gbs.NewServer(&Handler{Sync: false}, &gbs.ServerOption{
 		ParallelEnabled:  true,
 		CheckUtf8Enabled: true,
-		Recovery:         gws.Recovery,
+		Recovery:         gbs.Recovery,
 	})
 
-	s3 := gws.NewServer(&Handler{Sync: true}, &gws.ServerOption{
+	s3 := gbs.NewServer(&Handler{Sync: true}, &gbs.ServerOption{
 		CheckUtf8Enabled: true,
-		Recovery:         gws.Recovery,
+		Recovery:         gbs.Recovery,
 	})
 
-	s4 := gws.NewServer(&Handler{Sync: false}, &gws.ServerOption{
+	s4 := gbs.NewServer(&Handler{Sync: false}, &gbs.ServerOption{
 		ParallelEnabled:  true,
 		CheckUtf8Enabled: true,
-		Recovery:         gws.Recovery,
+		Recovery:         gbs.Recovery,
 	})
 
 	go func() {
@@ -45,15 +45,15 @@ func main() {
 }
 
 type Handler struct {
-	gws.BuiltinEventHandler
+	gbs.BuiltinEventHandler
 	Sync bool
 }
 
-func (c *Handler) OnPing(socket *gws.Conn, payload []byte) {
+func (c *Handler) OnPing(socket *gbs.Conn, payload []byte) {
 	_ = socket.WritePong(payload)
 }
 
-func (c *Handler) OnMessage(socket *gws.Conn, message *gws.Message) {
+func (c *Handler) OnMessage(socket *gbs.Conn, message *gbs.Message) {
 	if c.Sync {
 		_ = socket.WriteMessage(message.Opcode, message.Bytes())
 		_ = message.Close()
