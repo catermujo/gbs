@@ -34,6 +34,10 @@ type Conn struct {
 	isServer          bool
 }
 
+func (c *Conn) UpdateHandler(handler Event) {
+	c.handler = handler
+}
+
 // ReadLoop
 // 循环读取消息. 如果复用了HTTP Server, 建议开启goroutine, 阻塞会导致请求上下文无法被GC.
 // Read messages in a loop.
