@@ -80,7 +80,7 @@ var (
 	ErrUnsupportedProtocol = errors.New("unsupported protocol")
 )
 
-type Event interface {
+type EventHandler interface {
 	// OnOpen 建立连接事件
 	// WebSocket connection was successfully established
 	OnOpen(socket *Conn)

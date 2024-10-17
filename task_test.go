@@ -19,7 +19,7 @@ func serveWebSocket(
 	session SessionStorage,
 	netConn net.Conn,
 	br *bufio.Reader,
-	handler Event,
+	handler EventHandler,
 	subprotocol string,
 ) *Conn {
 	socket := &Conn{
@@ -38,7 +38,7 @@ func serveWebSocket(
 	return socket
 }
 
-func newPeer(serverHandler Event, serverOption *ServerOption, clientHandler Event, clientOption *ClientOption) (server, client *Conn) {
+func newPeer(serverHandler EventHandler, serverOption *ServerOption, clientHandler EventHandler, clientOption *ClientOption) (server, client *Conn) {
 	serverOption = initServerOption(serverOption)
 	clientOption = initClientOption(clientOption)
 	size := 4096

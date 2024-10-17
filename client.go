@@ -26,13 +26,13 @@ type Dialer interface {
 type connector struct {
 	option          *ClientOption
 	conn            net.Conn
-	eventHandler    Event
+	eventHandler    EventHandler
 	secWebsocketKey string
 }
 
 // NewClient 创建一个新的 WebSocket 客户端连接
 // Creates a new WebSocket client connection
-func NewClient(handler Event, option *ClientOption) (*Conn, *http.Response, error) {
+func NewClient(handler EventHandler, option *ClientOption) (*Conn, *http.Response, error) {
 	option = initClientOption(option)
 	c := &connector{option: option, eventHandler: handler}
 	URL, err := url.Parse(option.Addr)
@@ -72,7 +72,7 @@ func NewClient(handler Event, option *ClientOption) (*Conn, *http.Response, erro
 
 // NewClientFromConn 通过外部连接创建客户端, 支持 TCP/KCP/Unix Domain Socket
 // Create new client via external connection, supports TCP/KCP/Unix Domain Socket.
-func NewClientFromConn(handler Event, option *ClientOption, conn net.Conn) (*Conn, *http.Response, error) {
+func NewClientFromConn(handler EventHandler, option *ClientOption, conn net.Conn) (*Conn, *http.Response, error) {
 	option = initClientOption(option)
 	c := &connector{option: option, conn: conn, eventHandler: handler}
 	client, resp, err := c.handshake()

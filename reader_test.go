@@ -57,7 +57,7 @@ type testRow struct {
 	Title    string `json:"title"`
 	Payload  string `json:"payload"`
 	Expected struct {
-		Event  string `json:"event"`
+		EventHandler  string `json:"event"`
 		Reason string `json:"reason"`
 		Code   uint16 `json:"code"`
 	} `json:"expected"`
@@ -108,7 +108,7 @@ func TestRead(t *testing.T) {
 			WriteMaxPayloadSize: 1024 * 1024,
 		}
 
-		switch item.Expected.Event {
+		switch item.Expected.EventHandler {
 		case "onMessage":
 			clientHandler.onMessage = func(socket *Conn, message *Message) {
 				as.Equal(string(payload), message.Data.String())

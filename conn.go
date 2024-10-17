@@ -20,7 +20,7 @@ type Conn struct {
 	ev        atomic.Value
 	ss        SessionStorage
 	conn      net.Conn
-	handler   Event
+	handler   EventHandler
 	readQueue channel
 	config    *Config
 	// br Buffered reader
@@ -34,7 +34,7 @@ type Conn struct {
 	isServer          bool
 }
 
-func (c *Conn) UpdateHandler(handler Event) {
+func (c *Conn) UpdateHandler(handler EventHandler) {
 	c.handler = handler
 }
 

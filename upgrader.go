@@ -93,12 +93,12 @@ func (c *responseWriter) Write(conn net.Conn, timeout time.Duration) error {
 
 type Upgrader struct {
 	option       *ServerOption
-	eventHandler Event
+	eventHandler EventHandler
 }
 
 // NewUpgrader 创建一个新的 Upgrader 实例
 // Creates a new instance of Upgrader
-func NewUpgrader(eventHandler Event, option *ServerOption) *Upgrader {
+func NewUpgrader(eventHandler EventHandler, option *ServerOption) *Upgrader {
 	u := &Upgrader{
 		option:       initServerOption(option),
 		eventHandler: eventHandler,
@@ -239,7 +239,7 @@ type Server struct {
 
 // NewServer 创建一个新的 WebSocket 服务器实例
 // Creates a new WebSocket server instance
-func NewServer(eventHandler Event, option *ServerOption) *Server {
+func NewServer(eventHandler EventHandler, option *ServerOption) *Server {
 	c := &Server{upgrader: NewUpgrader(eventHandler, option)}
 	c.option = c.upgrader.option
 	c.OnError = func(conn net.Conn, err error) { c.option.Logger.Error("gbs: " + err.Error()) }
