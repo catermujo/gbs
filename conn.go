@@ -68,7 +68,7 @@ func (c *Conn) ReadLoop() {
 
 // 检查连接是否已关闭
 // Checks if the connection is closed
-func (c *Conn) isClosed() bool {
+func (c *Conn) IsClosed() bool {
 	return atomic.LoadUint32(&c.closed) == 1
 }
 

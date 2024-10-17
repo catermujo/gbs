@@ -116,7 +116,7 @@ func (c *Conn) doWrite(opcode Opcode, payload internal.Payload) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if opcode != OpcodeCloseConnection && c.isClosed() {
+	if opcode != OpcodeCloseConnection && c.IsClosed() {
 		return ErrConnClosed
 	}
 
@@ -212,7 +212,7 @@ func NewBroadcaster(opcode Opcode, payload []byte) *Broadcaster {
 // 将帧数据写入连接
 // Writes the frame data to the connection
 func (c *Broadcaster) writeFrame(socket *Conn, frame *bytes.Buffer) error {
-	if socket.isClosed() {
+	if socket.IsClosed() {
 		return ErrConnClosed
 	}
 	socket.mu.Lock()
