@@ -8,7 +8,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/isinyaaa/gbs/internal"
+	"github.com/catermujo/gbs/internal"
 )
 
 //go:embed assets/github.json

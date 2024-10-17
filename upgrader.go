@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/isinyaaa/gbs/internal"
+	"github.com/catermujo/gbs/internal"
 )
 
 type responseWriter struct {

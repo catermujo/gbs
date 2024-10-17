@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/isinyaaa/gbs/internal"
+	"github.com/catermujo/gbs/internal"
 	"github.com/stretchr/testify/assert"
 )
 

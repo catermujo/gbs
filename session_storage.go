@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/dolthub/maphash"
-	"github.com/isinyaaa/gbs/internal"
+	"github.com/catermujo/gbs/internal"
 )
 
 // SessionStorage 会话存储

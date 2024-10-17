@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/isinyaaa/gbs"
+	"github.com/catermujo/gbs"
 )
 
 const (

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/isinyaaa/gbs/internal"
+	"github.com/catermujo/gbs/internal"
 )
 
 // Dialer 拨号器接口

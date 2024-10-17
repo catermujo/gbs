@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/isinyaaa/gbs"
+	"github.com/catermujo/gbs"
 )
 
 const remoteAddr = "127.0.0.1:9001"

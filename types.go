@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/isinyaaa/gbs/internal"
+	"github.com/catermujo/gbs/internal"
 )
 
 const frameHeaderSize = 14

@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/isinyaaa/gbs"
+	"github.com/catermujo/gbs"
 )
 
 func main() {

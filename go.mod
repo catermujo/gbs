@@ -1,4 +1,4 @@
-module github.com/isinyaaa/gbs
+module github.com/catermujo/gbs
 
 go 1.20
 

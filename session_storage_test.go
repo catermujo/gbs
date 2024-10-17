@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/dolthub/maphash"
-	"github.com/isinyaaa/gbs/internal"
+	"github.com/catermujo/gbs/internal"
 	"github.com/stretchr/testify/assert"
 )
 

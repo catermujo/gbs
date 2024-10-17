@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/isinyaaa/gbs"
+	"github.com/catermujo/gbs"
 )
 
 func main() {

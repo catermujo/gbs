@@ -1,6 +1,6 @@
 package gbs
 
-import "github.com/isinyaaa/gbs/internal"
+import "github.com/catermujo/gbs/internal"
 
 var (
 	framePadding    = frameHeader{}            // 帧头填充物

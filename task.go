@@ -3,7 +3,7 @@ package gbs
 import (
 	"sync"
 
-	"github.com/isinyaaa/gbs/internal"
+	"github.com/catermujo/gbs/internal"
 )
 
 type (

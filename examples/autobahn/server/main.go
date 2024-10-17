@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/isinyaaa/gbs"
+	"github.com/catermujo/gbs"
 )
 
 func main() {
